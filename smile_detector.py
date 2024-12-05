@@ -46,7 +46,11 @@ class SmileDetector:
         smiles = smile_cascade.detectMultiScale(
             roi_gray, scaleFactor=1.1, minNeighbors=20, minSize=(25, 25)
         )
-        return smiles[0] if len(smiles) else None
+        if len(smiles):
+            (sx, sy, sw, sh) = smiles[0]
+            return (x + sx, y + sy, sw, sh)
+        else:
+            return None
     
    
     
