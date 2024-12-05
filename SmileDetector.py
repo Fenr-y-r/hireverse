@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
+
+from frame import Frame
+
 
 class SmileDetector:
     def __init__(self):
@@ -27,13 +29,12 @@ class SmileDetector:
     def __detect_smiles(self, roi_gray):
         return self.smile_cascade.detectMultiScale(roi_gray, scaleFactor=1.1, minNeighbors=20, minSize=(25, 25))
 
-    def process_frame(self, frame):
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    def set_frame_smile_area(self, frame: Frame):
+        gray = cv2.cvtColor(frame.image, cv2.COLOR_BGR2GRAY)
         faces = self.__detect_faces(gray)
 
         if len(faces) == 0:
             return 0
-
 
         largest_face = max(faces, key=self.calculate_face_area)
         (x, y, w, h) = largest_face
@@ -41,19 +42,9 @@ class SmileDetector:
 
         smiles = self.__detect_smiles(roi_gray)
         if len(smiles) > 0:
-            return self.__get_smile_area(smiles[0])
+            frame.smile_area = self.__get_smile_area(smiles[0])
         else:
-            return 0
-        
-
-    def display_results(self, frames, smile_areas):
-        for i, (frame, smile_intensity) in enumerate(zip(frames, smile_areas)):
-            plt.imshow(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-            plt.title(f"Frame {i}")
-            plt.axis('off')
-            plt.show()
-            print(f"Frame {i}: Smile Intensity: {smile_intensity}")
-        
+            frame.smile_area = 0
         
     def set_average_smile_intensity(self, smile_areas):
         self.average_smile_intensity = np.mean(smile_areas)
