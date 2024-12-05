@@ -19,3 +19,14 @@ class Frame:
 
     def __str__(self):
         return f"index={self.index}, smile_area={self.smile_area}, participant={self.participant}"
+
+    def draw(self):
+        if self.smile is not None:
+            # Draw a rectangle around the smile
+            (x, y, w, h) = self.smile  # Extract coordinates of the smile
+            cv2.rectangle(self.image, (x, y), (x + w, y + h), (0, 255, 0), 2)  # Draw green rectangle
+
+        # Optionally, draw the face rectangle if face is not None
+        if self.face is not None:
+            (fx, fy, fw, fh) = self.face  # Extract face coordinates
+            cv2.rectangle(self.image, (fx, fy), (fx + fw, fy + fh), (255, 0, 0), 2)  # Draw blue rectangle
