@@ -8,6 +8,8 @@ class Frame:
         self.participant = participant 
         self.image = image
         self.smile_area = None
+        self.face = None
+        self.smile = None
 
     def display_frame(self):
         plt.imshow(cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB))
