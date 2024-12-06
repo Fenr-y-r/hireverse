@@ -16,6 +16,8 @@ class SmileDetector:
         return w * h
 
     def normalize_smile_area(self, min_smile_area, max_smile_area, smile_area):
+        if(max_smile_area == min_smile_area):
+            return smile_area
         normalized_smile_area = (
             (smile_area - min_smile_area) / (max_smile_area - min_smile_area) * 100
         )
