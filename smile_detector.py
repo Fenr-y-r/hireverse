@@ -49,7 +49,10 @@ class SmileDetector:
             roi_gray, scaleFactor=1.1, minNeighbors=20, minSize=(25, 25)
         )
         if len(smiles):
-            (sx, sy, sw, sh) = smiles[0]
+            index = 0
+            if len(smiles) > 1:
+                index = 1
+            (sx, sy, sw, sh) = smiles[index]    
             return (x + sx, y + sy, sw, sh)
         else:
             return None
