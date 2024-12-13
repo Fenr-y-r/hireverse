@@ -27,13 +27,16 @@ class SmileDetector:
         (x, y, w, h) = face
         return w * h
 
-    def get_face(self, frame_image):
-        gray_frame = cv2.cvtColor(frame_image, cv2.COLOR_BGR2GRAY)
+    def convert_to_gray(self, frame_image):
+        return cv2.cvtColor(frame_image, cv2.COLOR_BGR2GRAY)
+
+    def get_face(self, frame_image):    
+        gray_image = self.convert_to_gray(frame_image)
         face_cascade = cv2.CascadeClassifier(
             cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
         )
         faces = face_cascade.detectMultiScale(
-            gray_frame, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30)
+            gray_image, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30)
         )
         return max(faces, key=self.calculate_face_area) if len(faces) else None
 
