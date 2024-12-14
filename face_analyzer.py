@@ -1,4 +1,5 @@
 
+from typing import List, Tuple
 import cv2
 import dlib  # type: ignore
 from imutils import face_utils  # type: ignore
@@ -62,11 +63,11 @@ class FaceAnalyzer:
         landmarks = predictor(self.convert_to_gray(frame.image), dlib_rect)
         return face_utils.shape_to_np(landmarks)  # convert to a NumPy array
     
-    def get_eyebrows_coordinates(self, landmarks):
-        outer_brow_left = landmarks[17]
-        inner_brow_left = landmarks[21]
-        inner_brow_right = landmarks[22]
-        outer_brow_right = landmarks[26]
+    def get_eyebrows_coordinates(self, face_interest_points: List[Tuple[int, int]]):
+        outer_brow_left = face_interest_points[17]
+        inner_brow_left = face_interest_points[21]
+        inner_brow_right = face_interest_points[22]
+        outer_brow_right = face_interest_points[26]
         return EyeBrows(
             inner_brow_left, outer_brow_left, inner_brow_right, outer_brow_right
         )
