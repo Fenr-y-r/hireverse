@@ -21,7 +21,7 @@ class Frame:
         self.copied_image_for_drawing = self.image.copy()
 
     def draw_smile(self):
-        if self.smile is not None:
+        if self.smile:
             self.draw_rectangle(self.smile, (0, 255, 0))
 
     def draw_face(self):
@@ -29,12 +29,12 @@ class Frame:
             self.draw_rectangle(self.face, (255, 0, 0))
 
     def draw_facial_landmarks(self):
-        if self.face_interest_points is not None:
+        if self.face_interest_points:
             for (x, y) in self.face_interest_points:
                 self.draw_cirle((x,y))
     
     def draw_selected_facial_landmarks(self):
-        if self.selected_facial_landmarks is not None:
+        if self.selected_facial_landmarks:
             self.draw_line(self.selected_facial_landmarks.outer_lip_above, self.selected_facial_landmarks.outer_lip_below,  color = (0, 155, 255))
             self.draw_line(self.selected_facial_landmarks.inner_lip_above, self.selected_facial_landmarks.inner_lip_below,  color = (0, 255, 255))
             self.draw_line(self.selected_facial_landmarks.lip_corner_right, self.selected_facial_landmarks.lip_corner_left,  color = (0, 155, 255))            

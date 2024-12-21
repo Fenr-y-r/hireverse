@@ -29,7 +29,7 @@ class FaceAnalyzer:
         faces = face_cascade.detectMultiScale(
             gray_image, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30)
         )
-        return max(faces, key=self.calculate_face_area) if len(faces) else None
+        return tuple(max(faces, key=self.calculate_face_area)) if len(faces) else None
 
     """This returns the coordinates of one smile relative to the face not the whole frame"""
 
@@ -43,7 +43,7 @@ class FaceAnalyzer:
         smiles = smile_cascade.detectMultiScale(
             roi_gray, scaleFactor=1.1, minNeighbors=35, 
         )
-        if len(smiles) > 0:
+        if len(smiles):
             largest_smile = max(smiles, key=lambda s: s[2] * s[3])
             (sx, sy, sw, sh) = largest_smile
             if sy > h // 2:
