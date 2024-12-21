@@ -4,3 +4,4 @@ __pycache__/
 .DS_Store
 models/emotion-detection.ipynb
 archive (3)/
+.vscode/

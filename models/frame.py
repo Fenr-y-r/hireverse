@@ -11,8 +11,8 @@ class Frame:
         self.participant = participant 
         self.image = image
         self.smile_area = None
-        self.face = None
-        self.smile = None
+        self.face: Tuple[int, int, int, int] = None
+        self.smile: Tuple[int, int, int, int] = None
         self.face_interest_points = None
         self.copied_image_for_drawing = None
         self.selected_facial_landmarks: SelectedFacialLandmarks = None
@@ -55,6 +55,8 @@ class Frame:
         cv2.line(self.copied_image_for_drawing, tuple(start_coordinates), tuple(end_coordinates), color, 2)
 
     def display(self):
+        if self.copied_image_for_drawing is None:
+            self.create_drawable_image_copy()
         plt.imshow(cv2.cvtColor(self.copied_image_for_drawing, cv2.COLOR_BGR2RGB))
         plt.title(f"Frame {self.index}")
         plt.axis('off')

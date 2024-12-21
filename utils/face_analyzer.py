@@ -35,13 +35,13 @@ class FaceAnalyzer:
 
     def get_smile(self, frame_image, face):
         (x, y, w, h) = face
-        gray_frame = cv2.cvtColor(frame_image, cv2.COLOR_BGR2GRAY)
-        roi_gray = gray_frame[y : y + h, x : x + w]
+        gray_image = self.convert_to_gray(frame_image)
+        roi_gray = gray_image[y : y + h, x : x + w]
         smile_cascade = cv2.CascadeClassifier(
             cv2.data.haarcascades + "haarcascade_smile.xml"
         )
         smiles = smile_cascade.detectMultiScale(
-            roi_gray, scaleFactor=1.1, minNeighbors=35, 
+            roi_gray, scaleFactor=1.05, minNeighbors=35, 
         )
         if len(smiles):
             largest_smile = max(smiles, key=lambda s: s[2] * s[3])
