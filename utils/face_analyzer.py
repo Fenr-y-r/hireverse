@@ -41,7 +41,10 @@ class FaceAnalyzer:
             cv2.data.haarcascades + "haarcascade_smile.xml"
         )
         smiles = smile_cascade.detectMultiScale(
-            roi_gray, scaleFactor=1.05, minNeighbors=35, 
+            roi_gray, 
+            scaleFactor=1.04,  # Compensates for that an object at different distances from the camera will appear at different sizes. A lower scaleFactor increases the detection time but also increases the chance of detection.  # Typical values range from 1.01 to 1.3.
+            minNeighbors=47,    # Higher values result in fewer detections but with higher quality. Lower values may lead to more detections but with possible false positives. It’s a trade-off between precision and recall.
+            # minSize=(30, 30)    # smiles smaller than this size are ignored.  # TODO: change according to the face distance from webcam
         )
         if len(smiles):
             largest_smile = max(smiles, key=lambda s: s[2] * s[3])
