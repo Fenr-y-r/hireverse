@@ -17,23 +17,28 @@ class Frame:
         self.copied_image_for_drawing = None
         self.selected_facial_landmarks: SelectedFacialLandmarks = None
 
-    def create_drawable_image_copy(self):
-        self.copied_image_for_drawing = self.image.copy()
+    def _create_drawable_image_copy_if_not_exist(self):
+        if self.copied_image_for_drawing is None:
+            self.copied_image_for_drawing = self.image.copy()
 
     def draw_smile(self):
+        self._create_drawable_image_copy_if_not_exist()
         if self.smile:
             self.draw_rectangle(self.smile, (0, 255, 0))
 
     def draw_face(self):
+        self._create_drawable_image_copy_if_not_exist()
         if self.face is not None:
             self.draw_rectangle(self.face, (255, 0, 0))
 
     def draw_facial_landmarks(self):
+        self._create_drawable_image_copy_if_not_exist()
         if self.face_interest_points:
             for (x, y) in self.face_interest_points:
                 self.draw_cirle((x,y))
-    
+                  
     def draw_selected_facial_landmarks(self):
+        self._create_drawable_image_copy_if_not_exist()
         if self.selected_facial_landmarks:
             self.draw_line(self.selected_facial_landmarks.outer_lip_above, self.selected_facial_landmarks.outer_lip_below,  color = (0, 155, 255))
             self.draw_line(self.selected_facial_landmarks.inner_lip_above, self.selected_facial_landmarks.inner_lip_below,  color = (0, 255, 255))
@@ -43,6 +48,8 @@ class Frame:
                 if isinstance(value, Tuple):
                     self.draw_cirle(value)
 
+    def reset_image_after_drawing(self):
+        self.copied_image_for_drawing = self.image.copy()
 
     def draw_rectangle(self, x_y_w_h_tuple, color = (255, 0, 0)):
         (x, y, w, h) = x_y_w_h_tuple
@@ -55,8 +62,7 @@ class Frame:
         cv2.line(self.copied_image_for_drawing, tuple(start_coordinates), tuple(end_coordinates), color, 2)
 
     def display(self):
-        if self.copied_image_for_drawing is None:
-            self.create_drawable_image_copy()
+        self._create_drawable_image_copy_if_not_exist()
         plt.imshow(cv2.cvtColor(self.copied_image_for_drawing, cv2.COLOR_BGR2RGB))
         plt.title(f"Frame {self.index}")
         plt.axis('off')

@@ -3,7 +3,7 @@ from typing import List, Tuple
 import cv2
 import dlib  # type: ignore
 from imutils import face_utils  # type: ignore
-
+import numpy as np
 from models.selected_facial_landmarks import SelectedFacialLandmarks
 from models.frame import Frame
 
@@ -64,7 +64,7 @@ class FaceAnalyzer:
         landmarks = predictor(self.convert_to_gray(frame.image), dlib_rect)
         landmarks_np = face_utils.shape_to_np(landmarks)  # convert to a NumPy array
         return [(point[0], point[1]) for point in landmarks_np]  # convert to a list of tuples
-
+    
     def _get_brow_interest_points(
         self, face_interest_points: List[Tuple[int, int]]
     ) -> Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int], Tuple[int, int]]:
