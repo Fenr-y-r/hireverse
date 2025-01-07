@@ -48,7 +48,7 @@ class Frame:
                 if isinstance(value, Tuple):
                     self.draw_cirle(value)
 
-    def reset_image_after_drawing(self):
+    def reset_drawable_image(self):
         self.copied_image_for_drawing = self.image.copy()
 
     def draw_rectangle(self, x_y_w_h_tuple, color = (255, 0, 0)):
