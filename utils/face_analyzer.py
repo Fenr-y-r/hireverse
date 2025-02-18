@@ -11,29 +11,18 @@ import mediapipe as mp
 
 
 class FaceAnalyzer:
+    def __init__(self, image):
+        self.face_mesh = mp.solutions.face_mesh.FaceMesh(
+            static_image_mode=True, min_detection_confidence=0.5
+        )
+        self.image = image
+        self.faces = self.face_mesh.process(
+            cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
+        ).multi_face_landmarks
 
-    def get_smile_area(self, smile):
-        (x, y, w, h) = smile
-        return w * h
-
-    def calculate_face_area(self, face):
+    def _calculate_face_area(self, face):
         (x, y, w, h) = face
         return w * h
-
-    def convert_to_gray(self, frame_image):
-        return cv2.cvtColor(frame_image, cv2.COLOR_BGR2GRAY)
-
-    def get_face(self, frame_image):
-        gray_image = self.convert_to_gray(frame_image)
-        face_cascade = cv2.CascadeClassifier(
-            cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-        )
-        faces = face_cascade.detectMultiScale(
-            gray_image, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30)
-        )
-        return tuple(max(faces, key=self.calculate_face_area)) if len(faces) else None
-
-    """This returns the coordinates of one smile relative to the face not the whole frame"""
 
     def get_smile(self, frame_image, face):
         (x, y, w, h) = face
@@ -56,18 +45,61 @@ class FaceAnalyzer:
 
         return None
 
-    def get_face_interest_points(self, frame: Frame):
-        if frame.face is None:
-            return None
-        (x, y, w, h) = frame.face
-        predictor = dlib.shape_predictor("models/shape_predictor_68_face_landmarks.dat")
-        dlib_rect = dlib.rectangle(int(x), int(y), int(x + w), int(y + h))
-        # uses a facial landmark predictor to detect landmarks within a specified region of the image
-        landmarks = predictor(self.convert_to_gray(frame.image), dlib_rect)
-        landmarks_np = face_utils.shape_to_np(landmarks)  # convert to a NumPy array
-        return [
-            (point[0], point[1]) for point in landmarks_np
-        ]  # convert to a list of tuples
+    def get_face_coordinates(
+        self, face_landmarks: List[mp.solutions.face_mesh.FaceMeshLandmark]
+    ):
+        """
+        This method returns the coordinates of the face in the form of a tuple (x, y, w, h).
+        """
+        # Calculate the bounding box for each face
+        x_coords = [landmark.x for landmark in face_landmarks]
+        y_coords = [landmark.y for landmark in face_landmarks]
+        # TODO: replace the follwoing with   bboxC = detection.location_data.relative_bounding_box
+        # Calculate the bounding box coordinates (normalized)
+        min_x, max_x = min(x_coords), max(x_coords)
+        min_y, max_y = min(y_coords), max(y_coords)
+        img_h = self.image.shape[1]
+        img_w = self.image.shape[0]
+        return (
+            int(min_x * img_h),
+            int(min_y * img_w),
+            round((max_x - min_x) * img_h),
+            round((max_y - min_y) * img_w),
+        )
+
+    # TODO: make sure this works
+    def get_largest_face(self):
+        """
+        This function takes the MediaPipe results and returns the largest face landmarks
+        based on bounding box area.
+        """
+        if self.faces:
+            max_area = 0
+            largest_face = None
+
+            for face in self.faces:
+                _, _, w, h = self.get_face_coordinates(face.landmark)
+                area = w * h
+
+                if area > max_area:
+                    max_area = area
+                    largest_face = face
+
+            return largest_face
+
+        return None
+
+    def get_facial_landmarks(self):
+        largest_face_landmarks = self.get_largest_face().landmark
+        return largest_face_landmarks
+
+
+
+
+
+
+
+
 
     def _get_brow_interest_points(
         self, face_interest_points: List[Tuple[int, int]]
@@ -126,7 +158,7 @@ class FaceAnalyzer:
         )
         return (outer_lip_height, inner_lip_height, lip_corner_distance)
 
-    def get_selected_facial_features(
+    def get_selected_facial_landmarks(
         self, face_interest_points: List[Tuple[int, int]]
     ) -> SelectedFacialLandmarks:
         (outer_brow_left, inner_brow_left, inner_brow_right, outer_brow_right) = (
@@ -229,10 +261,6 @@ class FaceAnalyzer:
 
     # TODO: change isWebcam
     def get_head_pose_using_mediapipe(self, image, isWebcam=False):
-        mp_face_mesh = mp.solutions.face_mesh
-        face_mesh = mp_face_mesh.FaceMesh(
-            static_image_mode=True, min_detection_confidence=0.5
-        )
 
         mp_drawing = mp.solutions.drawing_utils
         drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
@@ -285,44 +313,75 @@ class FaceAnalyzer:
                 # the output rotation and translation vectors tell you how the object is oriented and positioned relative to the camera in the 3D world.
                 success, rotation_vector, translation_vector = cv2.solvePnP(
                     face_3d, face_2d, cam_matrix, distortion_matrix
-                )   
+                )
                 rotation_matrix, jacobian_matrix = cv2.Rodrigues(rotation_vector)
                 angles, mtx, dist, rvecs, tvecs, _ = cv2.RQDecomp3x3(rotation_matrix)
 
-                x= angles[0] * 360 # because normalized
-                y= angles[1] * 360
-                z= angles[2] * 360
+                x = angles[0] * 360  # because normalized
+                y = angles[1] * 360
+                z = angles[2] * 360
 
                 if y < -10:
-                    text= "Looking left"
+                    text = "Looking left"
                 elif y > 10:
-                    text= "Looking down"
-                elif x>10:
-                    text= "Looking down"
-                elif x<-10:
-                    text= "Looking up"
+                    text = "Looking down"
+                elif x > 10:
+                    text = "Looking down"
+                elif x < -10:
+                    text = "Looking up"
                 else:
-                    text= "Looking straight"
+                    text = "Looking straight"
 
-                nose_3d_projection, jacobian = cv2.projectPoints(nose_3d, rotation_vector, translation_vector, cam_matrix, distortion_matrix)
+                nose_3d_projection, jacobian = cv2.projectPoints(
+                    nose_3d,
+                    rotation_vector,
+                    translation_vector,
+                    cam_matrix,
+                    distortion_matrix,
+                )
 
                 p1 = (int(nose_2d[0]), int(nose_2d[1]))
-                p2 = (int(nose_2d[0]+y*10), int(nose_2d[1]-x*10))
+                p2 = (int(nose_2d[0] + y * 10), int(nose_2d[1] - x * 10))
 
-                cv2.line(image,p1, p2, (255,0,0), 3)
+                cv2.line(image, p1, p2, (255, 0, 0), 3)
 
-                
-
-                cv2.putText(image, text, (20,50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
-                cv2.putText(image, "X: " + str(x), (20,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
-                cv2.putText(image, "Y: " + str(y), (20,150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
-                cv2.putText(image, "Z: " + str(z), (20,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+                cv2.putText(
+                    image, text, (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2
+                )
+                cv2.putText(
+                    image,
+                    "X: " + str(x),
+                    (20, 100),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (0, 0, 0),
+                    2,
+                )
+                cv2.putText(
+                    image,
+                    "Y: " + str(y),
+                    (20, 150),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (0, 0, 0),
+                    2,
+                )
+                cv2.putText(
+                    image,
+                    "Z: " + str(z),
+                    (20, 200),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (0, 0, 0),
+                    2,
+                )
 
                 mp_drawing.draw_landmarks(
-                    image, face_landmarks, mp_face_mesh.FACEMESH_TESSELATION, drawing_spec
+                    image,
+                    face_landmarks,
+                    mp_face_mesh.FACEMESH_TESSELATION,
+                    drawing_spec,
                 )
-                cv2.imshow('Head Pose', image)  
+                cv2.imshow("Head Pose", image)
                 cv2.waitKey(0)  # Waits indefinitely for a key press
-                cv2.destroyAllWindows()  
-
-
+                cv2.destroyAllWindows()

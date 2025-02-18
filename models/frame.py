@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import cv2
 from typing import Tuple
 import numpy as np
+import mediapipe as mp
 
 from models.selected_facial_landmarks import SelectedFacialLandmarks
 
@@ -16,6 +17,7 @@ class Frame:
         self.facial_landmarks = None
         self.copied_image_for_drawing = None
         self.selected_facial_landmarks: SelectedFacialLandmarks = None
+   
 
     def _create_drawable_image_copy_if_not_exist(self):
         if self.copied_image_for_drawing is None:
@@ -32,11 +34,20 @@ class Frame:
 
     def draw_face(self):
         self._create_drawable_image_copy_if_not_exist()
+        print(self.face)
         if self.face is not None:
             self.draw_rectangle(self.face, (255, 0, 0))
 
     def draw_facial_landmarks(self):
         self._create_drawable_image_copy_if_not_exist()
+        mp_drawing = mp.solutions.drawing_utils
+        drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
+        mp_drawing.draw_landmarks(
+                    self.image,
+                    self.facial_landmarks,
+
+                    drawing_spec,
+                )
         if self.facial_landmarks:
             for (x, y) in self.facial_landmarks:
                 self.draw_cirle((x,y))
