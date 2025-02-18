@@ -26,6 +26,10 @@ class Frame:
         if self.smile:
             self.draw_rectangle(self.smile, (0, 255, 0))
 
+    def draw_nose_line(self, p1, p2):
+        self._create_drawable_image_copy_if_not_exist()
+        
+
     def draw_face(self):
         self._create_drawable_image_copy_if_not_exist()
         if self.face is not None:

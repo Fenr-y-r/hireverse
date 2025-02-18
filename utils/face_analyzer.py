@@ -7,6 +7,7 @@ import numpy as np
 from models.selected_facial_landmarks import SelectedFacialLandmarks
 from models.frame import Frame
 from scipy.spatial.transform import Rotation as R
+import mediapipe as mp
 
 
 class FaceAnalyzer:
@@ -42,9 +43,9 @@ class FaceAnalyzer:
             cv2.data.haarcascades + "haarcascade_smile.xml"
         )
         smiles = smile_cascade.detectMultiScale(
-            roi_gray, 
+            roi_gray,
             scaleFactor=1.04,  # Compensates for that an object at different distances from the camera will appear at different sizes. A lower scaleFactor increases the detection time but also increases the chance of detection.  # Typical values range from 1.01 to 1.3.
-            minNeighbors=47,    # Higher values result in fewer detections but with higher quality. Lower values may lead to more detections but with possible false positives. It’s a trade-off between precision and recall.
+            minNeighbors=47,  # Higher values result in fewer detections but with higher quality. Lower values may lead to more detections but with possible false positives. It’s a trade-off between precision and recall.
             # minSize=(30, 30)    # smiles smaller than this size are ignored.  # TODO: change according to the face distance from webcam
         )
         if len(smiles):
@@ -52,7 +53,7 @@ class FaceAnalyzer:
             (sx, sy, sw, sh) = largest_smile
             if sy > h // 2:
                 return (x + sx, y + sy, sw, sh)
-        
+
         return None
 
     def get_face_interest_points(self, frame: Frame):
@@ -64,8 +65,10 @@ class FaceAnalyzer:
         # uses a facial landmark predictor to detect landmarks within a specified region of the image
         landmarks = predictor(self.convert_to_gray(frame.image), dlib_rect)
         landmarks_np = face_utils.shape_to_np(landmarks)  # convert to a NumPy array
-        return [(point[0], point[1]) for point in landmarks_np]  # convert to a list of tuples
-    
+        return [
+            (point[0], point[1]) for point in landmarks_np
+        ]  # convert to a list of tuples
+
     def _get_brow_interest_points(
         self, face_interest_points: List[Tuple[int, int]]
     ) -> Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int], Tuple[int, int]]:
@@ -165,9 +168,9 @@ class FaceAnalyzer:
 
     # def get_head_pose(self, frame: Frame) -> Tuple[float, float, float]:
     #     """ Computes yaw, pitch, and roll (in degrees) for a given frame. """
-        
+
     #     # Define 3D model points for a generic face (in millimeters)
-	#     # later used in pose estimation, where the relationship between these 3D points and their 2D projections can be used to estimate the orientation and position of the face in 3D space relative to the camera.
+    #     # later used in pose estimation, where the relationship between these 3D points and their 2D projections can be used to estimate the orientation and position of the face in 3D space relative to the camera.
     #     self.model_points = np.array([
     #         (0.0, 0.0, 0.0),         # Nose tip
     #         (-225.0, 170.0, -135.0), # Left eye left corner
@@ -195,8 +198,8 @@ class FaceAnalyzer:
 
     #     # Camera matrix (assuming focal length ~ image width, center is at (w/2, h/2))
     #     focal_length = w
-        
-    #     # Has information about the camera’s internal parameters, such as focal length and optical center 
+
+    #     # Has information about the camera’s internal parameters, such as focal length and optical center
     #     # It is used to convert 3D world coordinates into 2D image coordinates based on the camera’s perspective.
     #     camera_matrix = np.array([
     #         [focal_length, 0, w / 2],
@@ -223,3 +226,103 @@ class FaceAnalyzer:
     #     yaw, pitch, roll = rotation.as_euler('xyz', degrees=True)
 
     #     return yaw, pitch, roll
+
+    # TODO: change isWebcam
+    def get_head_pose_using_mediapipe(self, image, isWebcam=False):
+        mp_face_mesh = mp.solutions.face_mesh
+        face_mesh = mp_face_mesh.FaceMesh(
+            static_image_mode=True, min_detection_confidence=0.5
+        )
+
+        mp_drawing = mp.solutions.drawing_utils
+        drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
+
+        if isWebcam:
+            image = cv2.flip(image, 1)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+        # Performance improvement when passed to model
+        image.flags.writeable = False
+
+        results = face_mesh.process(image)  # pass to model
+
+        image.flags.writeable = False
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # to draw on it using opencv
+
+        img_h, img_w, img_channels_number = image.shape
+        face_3d = []
+        face_2d = []
+
+        # TODO: only work on largest face
+        if results.multi_face_landmarks:
+            for face_landmarks in results.multi_face_landmarks:
+                for i, landmark in enumerate(face_landmarks.landmark):
+                    if i == 33 or i == 263 or i == 1 or i == 61 or i == 291 or i == 199:
+                        if i == 1:
+                            nose_2d = (landmark.x * img_w, landmark.y * img_h)
+                            nose_3d = (landmark.x, landmark.y, landmark.z * 3000)
+                        x, y = int(landmark.x * img_w), int(
+                            landmark.y * img_h
+                        )  # x and y values are normalized, so we need to convert htem back to image coordinates by scaling them
+                        face_2d.append([x, y])
+                        #  z is the 3D depth of the landmark, and it's inferred based on face geometry and landmark pos
+                        face_3d.append([x, y, landmark.z])
+
+                face_2d = np.array(face_2d, dtype=np.float64)
+                face_3d = np.array(face_3d, dtype=np.float64)
+
+                focal_length = img_w
+                cam_matrix = np.array(
+                    [
+                        [focal_length, 0, img_h / 2],
+                        [0, focal_length, img_w / 2],
+                        [0, 0, 1],
+                    ],
+                    dtype="double",
+                )
+                distortion_matrix = np.zeros((4, 1), dtype=np.float64)  # no distortion
+                #  find out where the camera is in relation to the object and its orientation.
+                # the output rotation and translation vectors tell you how the object is oriented and positioned relative to the camera in the 3D world.
+                success, rotation_vector, translation_vector = cv2.solvePnP(
+                    face_3d, face_2d, cam_matrix, distortion_matrix
+                )   
+                rotation_matrix, jacobian_matrix = cv2.Rodrigues(rotation_vector)
+                angles, mtx, dist, rvecs, tvecs, _ = cv2.RQDecomp3x3(rotation_matrix)
+
+                x= angles[0] * 360 # because normalized
+                y= angles[1] * 360
+                z= angles[2] * 360
+
+                if y < -10:
+                    text= "Looking left"
+                elif y > 10:
+                    text= "Looking down"
+                elif x>10:
+                    text= "Looking down"
+                elif x<-10:
+                    text= "Looking up"
+                else:
+                    text= "Looking straight"
+
+                nose_3d_projection, jacobian = cv2.projectPoints(nose_3d, rotation_vector, translation_vector, cam_matrix, distortion_matrix)
+
+                p1 = (int(nose_2d[0]), int(nose_2d[1]))
+                p2 = (int(nose_2d[0]+y*10), int(nose_2d[1]-x*10))
+
+                cv2.line(image,p1, p2, (255,0,0), 3)
+
+                
+
+                cv2.putText(image, text, (20,50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+                cv2.putText(image, "X: " + str(x), (20,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+                cv2.putText(image, "Y: " + str(y), (20,150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+                cv2.putText(image, "Z: " + str(z), (20,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+
+                mp_drawing.draw_landmarks(
+                    image, face_landmarks, mp_face_mesh.FACEMESH_TESSELATION, drawing_spec
+                )
+                cv2.imshow('Head Pose', image)  
+                cv2.waitKey(0)  # Waits indefinitely for a key press
+                cv2.destroyAllWindows()  
+
+
