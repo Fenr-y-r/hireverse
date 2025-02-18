@@ -44,7 +44,7 @@ class FaceAnalyzer:
         self, face_landmarks, image
     ):
         """
-        This method sets the coordinates of the face in the form of a tuple (x, y, w, h).
+        This method returns the coordinates of the face in the form of a tuple (x, y, w, h).
         """
         # Calculate the bounding box for each face
         x_coords = [landmark.x for landmark in face_landmarks]
@@ -78,13 +78,13 @@ class FaceAnalyzer:
             max_area = 0
             largest_face_landmarks = None
 
-            for face_landmarks in detected_faces_landmarks:
-                _, _, w, h = self.get_face_coordinates(face_landmarks.landmark, image)
+            for face_landmarks_obj in detected_faces_landmarks:
+                _, _, w, h = self.get_face_coordinates(face_landmarks_obj.landmark, image)
                 area = w * h
 
                 if area > max_area:
                     max_area = area
-                    largest_face_landmarks = face_landmarks
+                    largest_face_landmarks = face_landmarks_obj
 
             return largest_face_landmarks
 
