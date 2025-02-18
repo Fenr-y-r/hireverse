@@ -13,7 +13,7 @@ class Frame:
         self.smile_area = None
         self.face: Tuple[int, int, int, int] = None
         self.smile: Tuple[int, int, int, int] = None
-        self.face_interest_points = None
+        self.facial_landmarks = None
         self.copied_image_for_drawing = None
         self.selected_facial_landmarks: SelectedFacialLandmarks = None
 
@@ -33,8 +33,8 @@ class Frame:
 
     def draw_facial_landmarks(self):
         self._create_drawable_image_copy_if_not_exist()
-        if self.face_interest_points:
-            for (x, y) in self.face_interest_points:
+        if self.facial_landmarks:
+            for (x, y) in self.facial_landmarks:
                 self.draw_cirle((x,y))
                   
     def draw_selected_facial_landmarks(self):

@@ -6,6 +6,7 @@ from imutils import face_utils  # type: ignore
 import numpy as np
 from models.selected_facial_landmarks import SelectedFacialLandmarks
 from models.frame import Frame
+from scipy.spatial.transform import Rotation as R
 
 
 class FaceAnalyzer:
@@ -161,3 +162,64 @@ class FaceAnalyzer:
             lip_corner_right=lip_corner_right,
             lip_corner_left=lip_corner_left,
         )
+
+    # def get_head_pose(self, frame: Frame) -> Tuple[float, float, float]:
+    #     """ Computes yaw, pitch, and roll (in degrees) for a given frame. """
+        
+    #     # Define 3D model points for a generic face (in millimeters)
+	#     # later used in pose estimation, where the relationship between these 3D points and their 2D projections can be used to estimate the orientation and position of the face in 3D space relative to the camera.
+    #     self.model_points = np.array([
+    #         (0.0, 0.0, 0.0),         # Nose tip
+    #         (-225.0, 170.0, -135.0), # Left eye left corner
+    #         (225.0, 170.0, -135.0),  # Right eye right corner
+    #         (-150.0, -150.0, -125.0),# Left mouth corner
+    #         (150.0, -150.0, -125.0), # Right mouth corner
+    #         (0.0, -330.0, -65.0)    # Chin
+    #     ], dtype=np.float32)
+
+    #     if frame.face is None or frame.facial_landmarks is None:
+    #         return (0.0, 0.0, 0.0)
+
+    #     (_, _, w, h) = frame.face
+    #     landmarks_np = frame.facial_landmarks
+
+    #     # Select 2D image points corresponding to 3D model points
+    #     detected_points = np.array([
+    #         landmarks_np[30],  # Nose tip
+    #         landmarks_np[36],  # Left eye left corner
+    #         landmarks_np[45],  # Right eye right corner
+    #         landmarks_np[48],  # Left mouth corner
+    #         landmarks_np[54],  # Right mouth corner
+    #         landmarks_np[8]    # Chin
+    #     ], dtype=np.float32)
+
+    #     # Camera matrix (assuming focal length ~ image width, center is at (w/2, h/2))
+    #     focal_length = w
+        
+    #     # Has information about the camera’s internal parameters, such as focal length and optical center 
+    #     # It is used to convert 3D world coordinates into 2D image coordinates based on the camera’s perspective.
+    #     camera_matrix = np.array([
+    #         [focal_length, 0, w / 2],
+    #         [0, focal_length, h / 2],
+    #         [0, 0, 1]
+    #     ], dtype=np.float32)
+
+    #     # These are the lens distortion coefficients. Cameras, especially with wide-angle lenses, introduce distortions like radial or tangential distortion. These coefficients are used to correct for such lens distortions in the image.
+    #     dist_coeffs = np.zeros((4, 1), dtype=np.float32)
+
+    #     # Solve PnP to get rotation vector
+    #     success, rvec, _ = cv2.solvePnP(
+    #         self.model_points, detected_points, camera_matrix, dist_coeffs, flags=cv2.SOLVEPNP_ITERATIVE
+    #     )
+
+    #     if not success:
+    #         return (0.0, 0.0, 0.0)
+
+    #     # Convert rotation vector to rotation matrix
+    #     rotation_matrix, _ = cv2.Rodrigues(rvec)
+
+    #     # Convert rotation matrix to Euler angles (yaw, pitch, roll)
+    #     rotation = R.from_matrix(rotation_matrix)
+    #     yaw, pitch, roll = rotation.as_euler('xyz', degrees=True)
+
+    #     return yaw, pitch, roll
