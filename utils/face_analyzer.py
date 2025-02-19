@@ -65,13 +65,13 @@ class FaceAnalyzer:
         )
 
 
-    def process_image (self,image):
+    def process_image (self,image) :
         return FaceAnalyzer.face_mesh.process(
             cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         ).multi_face_landmarks
 
     # TODO: make sure this works
-    def get_largest_face_landmarks(self, image, detected_faces_landmarks):
+    def get_largest_face_landmarks_obj(self, image, detected_faces_landmarks) -> list[NormalizedLandmark]:
         """
         This function takes the MediaPipe results and returns the largest face landmarks
         based on bounding box area.
@@ -88,15 +88,8 @@ class FaceAnalyzer:
                 if area > max_area:
                     max_area = area
                     largest_face_landmarks = face_landmarks_obj
-
             return largest_face_landmarks
 
-        return None
-
-    def get_facial_landmarks(self, image, detected_faces_landmarks):
-        if detected_faces_landmarks:
-            largest_face_landmarks = self.get_largest_face_landmarks(image, detected_faces_landmarks)
-            return largest_face_landmarks
         return None
     
 

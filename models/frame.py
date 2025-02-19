@@ -17,11 +17,12 @@ class Frame:
         self.smile_area = None
         self.face: Tuple[int, int, int, int] = None
         self.smile: Tuple[int, int, int, int] = None
-        self.facial_landmarks_obj = None
+        self.facial_landmarks = None
         self.copied_image_for_drawing = None
         self.selected_facial_landmarks: SelectedFacialLandmarks = None
         self.image = image
         self.faces = None
+        self.facial_landmarks_obj = None
 
     def _create_drawable_image_copy_if_not_exist(self):
         if self.copied_image_for_drawing is None:
@@ -44,7 +45,7 @@ class Frame:
         self._create_drawable_image_copy_if_not_exist()
         mp_drawing = mp.solutions.drawing_utils
         mp_drawing_styles = mp.solutions.drawing_styles
-        if self.facial_landmarks_obj:
+        if self.facial_landmarks:
             mp_drawing.draw_landmarks(
                 self.copied_image_for_drawing,
                 self.facial_landmarks_obj,  
