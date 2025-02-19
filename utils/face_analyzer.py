@@ -100,6 +100,14 @@ class FaceAnalyzer:
         return None
     
 
+    def denormalize_landmarks(self, landmark: NormalizedLandmark, img) -> Tuple[int, int]:
+        """
+        Denormalize the landmarks to the original image size 
+        """
+        img_w , img_h = img.shape[1], img.shape[0]
+        ordered_pair= landmark
+        return (int(ordered_pair.x * img_w), int(ordered_pair.y * img_h))
+
 
 
 
