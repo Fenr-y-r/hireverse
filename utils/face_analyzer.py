@@ -137,7 +137,7 @@ class FaceAnalyzer:
         )
 
     def _euclidean_distance_between_two_interest_points(self, point1, point2):
-        return math.sqrt((point2[0] - point1[0]) ** 2 + (point2[1] - point1[1]) ** 2)
+        return math.sqrt((point2.x - point1.x) ** 2 + (point2.y - point1.y) ** 2)
 
     def _get_lip_lengths(self, face_interest_points: List[Tuple[int, int]]):
         (
@@ -160,42 +160,44 @@ class FaceAnalyzer:
         return (outer_lip_height, inner_lip_height, lip_corner_distance)
 
     def get_selected_facial_landmarks(
-        self, face_interest_points: List[Tuple[int, int]]
+        self, face_interest_points: List[Tuple[int, int, int]]
     ) -> SelectedFacialLandmarks:
-        (outer_brow_left, inner_brow_left, inner_brow_right, outer_brow_right) = (self._get_brow_interest_points(face_interest_points))
-        (eye_outer_left, eye_outer_right, eye_inner_left, eye_inner_right) = (
-            self._get_eye_interest_points(face_interest_points)
-        )
-        (outer_lip_height, inner_lip_height, lip_corner_distance) = (
-            self._get_lip_lengths(face_interest_points)
-        )
-        (
-            outer_lip_above,
-            outer_lip_below,
-            inner_lip_above,
-            inner_lip_below,
-            lip_corner_right,
-            lip_corner_left,
-        ) = self.get_lips_coordinates(face_interest_points)
-        return SelectedFacialLandmarks(
-            inner_brow_left=inner_brow_left,
-            outer_brow_left=outer_brow_left,
-            inner_brow_right=inner_brow_right,
-            outer_brow_right=outer_brow_right,
-            eye_outer_left=eye_outer_left,
-            eye_outer_right=eye_outer_right,
-            eye_inner_left=eye_inner_left,
-            eye_inner_right=eye_inner_right,
-            outer_lip_height=outer_lip_height,
-            inner_lip_height=inner_lip_height,
-            lip_corner_distance=lip_corner_distance,
-            outer_lip_above=outer_lip_above,
-            outer_lip_below=outer_lip_below,
-            inner_lip_above=inner_lip_above,
-            inner_lip_below=inner_lip_below,
-            lip_corner_right=lip_corner_right,
-            lip_corner_left=lip_corner_left,
-        )
+        if face_interest_points:
+            (outer_brow_left, inner_brow_left, inner_brow_right, outer_brow_right) = (self._get_brow_interest_points(face_interest_points))
+            (eye_outer_left, eye_outer_right, eye_inner_left, eye_inner_right) = (
+                self._get_eye_interest_points(face_interest_points)
+            )
+            (outer_lip_height, inner_lip_height, lip_corner_distance) = (
+                self._get_lip_lengths(face_interest_points)
+            )
+            (
+                outer_lip_above,
+                outer_lip_below,
+                inner_lip_above,
+                inner_lip_below,
+                lip_corner_right,
+                lip_corner_left,
+            ) = self.get_lips_coordinates(face_interest_points)
+            return SelectedFacialLandmarks(
+                inner_brow_left=inner_brow_left,
+                outer_brow_left=outer_brow_left,
+                inner_brow_right=inner_brow_right,
+                outer_brow_right=outer_brow_right,
+                eye_outer_left=eye_outer_left,
+                eye_outer_right=eye_outer_right,
+                eye_inner_left=eye_inner_left,
+                eye_inner_right=eye_inner_right,
+                outer_lip_height=outer_lip_height,
+                inner_lip_height=inner_lip_height,
+                lip_corner_distance=lip_corner_distance,
+                outer_lip_above=outer_lip_above,
+                outer_lip_below=outer_lip_below,
+                inner_lip_above=inner_lip_above,
+                inner_lip_below=inner_lip_below,
+                lip_corner_right=lip_corner_right,
+                lip_corner_left=lip_corner_left,
+            )
+        return None
 
  
     
