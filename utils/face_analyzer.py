@@ -4,6 +4,7 @@ import cv2
 import mediapipe as mp
 from typing import List, Tuple
 import numpy as np
+from mediapipe.framework.formats.landmark_pb2 import NormalizedLandmark
 
 from models.frame import Frame
 from models.selected_facial_landmarks import SelectedFacialLandmarks
@@ -41,11 +42,12 @@ class FaceAnalyzer:
         return None
 
     def get_face_coordinates(
-        self, face_landmarks, image
+        self, face_landmarks: list[NormalizedLandmark] , image
     ):
         """
         This method returns the coordinates of the face in the form of a tuple (x, y, w, h).
         """
+    
         # Calculate the bounding box for each face
         x_coords = [landmark.x for landmark in face_landmarks]
         y_coords = [landmark.y for landmark in face_landmarks]
@@ -61,6 +63,7 @@ class FaceAnalyzer:
             round((max_x - min_x) * img_h),
             round((max_y - min_y) * img_w),
         )
+
 
     def process_image (self,image):
         return FaceAnalyzer.face_mesh.process(
@@ -91,8 +94,10 @@ class FaceAnalyzer:
         return None
 
     def get_facial_landmarks(self, image, detected_faces_landmarks):
-        largest_face_landmarks = self.get_largest_face_landmarks(image, detected_faces_landmarks)
-        return largest_face_landmarks
+        if detected_faces_landmarks:
+            largest_face_landmarks = self.get_largest_face_landmarks(image, detected_faces_landmarks)
+            return largest_face_landmarks
+        return None
     
 
 
@@ -105,7 +110,7 @@ class FaceAnalyzer:
 
 
     def _get_brow_interest_points(
-        self, face_interest_points: List[Tuple[int, int]]
+        self, face_interest_points
     ) -> Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int], Tuple[int, int]]:
         outer_brow_left = face_interest_points[17]
         inner_brow_left = face_interest_points[21]
@@ -164,9 +169,7 @@ class FaceAnalyzer:
     def get_selected_facial_landmarks(
         self, face_interest_points: List[Tuple[int, int]]
     ) -> SelectedFacialLandmarks:
-        (outer_brow_left, inner_brow_left, inner_brow_right, outer_brow_right) = (
-            self._get_brow_interest_points(face_interest_points)
-        )
+        (outer_brow_left, inner_brow_left, inner_brow_right, outer_brow_right) = (self._get_brow_interest_points(face_interest_points))
         (eye_outer_left, eye_outer_right, eye_inner_left, eye_inner_right) = (
             self._get_eye_interest_points(face_interest_points)
         )
