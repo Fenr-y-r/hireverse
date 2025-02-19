@@ -8,12 +8,12 @@ from mediapipe.framework.formats.landmark_pb2 import NormalizedLandmark
 
 from models.frame import Frame
 from models.selected_facial_landmarks import SelectedFacialLandmarks
+from utils.utils import denormalize_int
 
 class FaceAnalyzer:
     face_mesh = mp.solutions.face_mesh.FaceMesh(
             static_image_mode=True, min_detection_confidence=0.5
     )        
-        
 
 
     def _calculate_face_area(self, face):
@@ -65,10 +65,13 @@ class FaceAnalyzer:
         )
 
 
-    def process_image (self,image) :
-        return FaceAnalyzer.face_mesh.process(
+    def process_image_results (self,image) :
+        image.flags.writeable = False
+        results = FaceAnalyzer.face_mesh.process(
             cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         ).multi_face_landmarks
+        image.flags.writeable = True
+        return results
 
     # TODO: make sure this works
     def get_largest_face_landmarks_obj(self, image, detected_faces_landmarks) -> list[NormalizedLandmark]:
@@ -91,15 +94,6 @@ class FaceAnalyzer:
             return largest_face_landmarks
 
         return None
-    
-
-    def denormalize_landmarks_without_Z(self, landmark: NormalizedLandmark, img) -> Tuple[int, int]:
-        """
-        Denormalize the landmarks to the original image size and ignores Z axis.
-        """
-        img_w , img_h = img.shape[1], img.shape[0]
-        ordered_pair= landmark
-        return (int(ordered_pair.x * img_w), int(ordered_pair.y * img_h))
 
     def _get_brow_interest_points(
         self, face_interest_points
@@ -198,132 +192,110 @@ class FaceAnalyzer:
                 lip_corner_left=lip_corner_left,
             )
         return None
-
- 
     
-    
-    # def get_head_pose_using_mediapipe(self, image, isWebcam=False):
+    def get_face_angles(self, image, face_landmarks: list[NormalizedLandmark], isWebcam=False):
+        """
+        returns a rounded tuple (x, y, z) representing the angles of the face in degrees.
+        """
+        # if isWebcam:
+        #     image = cv2.flip(image, 1)
+        # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        if face_landmarks is None:
+            return None
+        img_h, img_w, img_channels_number = image.shape
+        face_3d = []
+        face_2d = []
 
-    #     mp_drawing = mp.solutions.drawing_utils
-    #     drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
+        for i, landmark in enumerate(face_landmarks):
+            if i == 33 or i == 263 or i == 1 or i == 61 or i == 291 or i == 199:
+                # if i == 1:
+                    # nose_2d = (landmark.x * img_w, landmark.y * img_h)
+                    # nose_3d = (landmark.x, landmark.y, landmark.z * 3000)
+                x, y = denormalize_int(landmark.x, img_w), denormalize_int(landmark.y, img_h)
+                face_2d.append([x, y])
+                # Z is an estimated depth coordinate relative to the camera calculated using a machine learning mode. It is not an absolute distance, but rather a value indicating how far a landmark is from the image plane.
+                # The model does not compute actual physical depth (in meters or cm). Instead, it predicts a relative depth value, where larger negative Z-values mean landmarks are deeper (farther from the camera).
+                # The Z-values are normalized relative to the bounding box size of the detected face. If the face appears closer to the camera, the bounding box is larger, and the Z-values may be scaled differently.
+                face_3d.append([x, y, landmark.z])
 
-    #     if isWebcam:
-    #         image = cv2.flip(image, 1)
-    #     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        face_2d = np.array(face_2d, dtype=np.float64)
+        face_3d = np.array(face_3d, dtype=np.float64)
 
-    #     # Performance improvement when passed to model
-    #     image.flags.writeable = False
+        focal_length = img_w
+        cam_matrix = np.array(
+            [
+                [focal_length, 0, img_h / 2],
+                [0, focal_length, img_w / 2],
+                [0, 0, 1],
+            ],
+            dtype="double",
+        )
+        distortion_matrix = np.zeros((4, 1), dtype=np.float64)  # no distortion
+        #  find out where the camera is in relation to the object and its orientation.
+        # the output rotation and translation vectors tell you how the object is oriented and positioned relative to the camera in the 3D world.
+        success, rotation_vector, translation_vector = cv2.solvePnP(
+            face_3d, face_2d, cam_matrix, distortion_matrix
+        )
+        rotation_matrix, jacobian_matrix = cv2.Rodrigues(rotation_vector)
+        angles, mtx, dist, rvecs, tvecs, _ = cv2.RQDecomp3x3(rotation_matrix)
 
-    #     results = FaceAnalyzer.face_mesh.process(image)  # pass to model
+        x = angles[0] * 360 # because normalized
+        y = angles[1] * 360
+        z = angles[2] * 360
 
-    #     image.flags.writeable = False
-    #     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # to draw on it using opencv
+        if y < -10:
+            text = "Looking left"
+        elif y > 10:
+            text = "Looking down"
+        elif x > 10:
+            text = "Looking down"
+        elif x < -10:
+            text = "Looking up"
+        else:
+            text = "Looking straight"
 
-    #     img_h, img_w, img_channels_number = image.shape
-    #     face_3d = []
-    #     face_2d = []
+        # nose_3d_projection, jacobian = cv2.projectPoints(
+        #     nose_3d,
+        #     rotation_vector,
+        #     translation_vector,
+        #     cam_matrix,
+        #     distortion_matrix,
+        # )
 
-    #     # TODO: only work on largest face
-    #     if results.multi_face_landmarks:
-    #         for face_landmarks in results.multi_face_landmarks:
-    #             for i, landmark in enumerate(face_landmarks.landmark):
-    #                 if i == 33 or i == 263 or i == 1 or i == 61 or i == 291 or i == 199:
-    #                     if i == 1:
-    #                         nose_2d = (landmark.x * img_w, landmark.y * img_h)
-    #                         nose_3d = (landmark.x, landmark.y, landmark.z * 3000)
-    #                     x, y = int(landmark.x * img_w), int(
-    #                         landmark.y * img_h
-    #                     )  # x and y values are normalized, so we need to convert htem back to image coordinates by scaling them
-    #                     face_2d.append([x, y])
-    #                     #  z is the 3D depth of the landmark, and it's inferred based on face geometry and landmark pos
-    #                     face_3d.append([x, y, landmark.z])
+        # p1 = (int(nose_2d[0]), int(nose_2d[1]))
+        # p2 = (int(nose_2d[0] + y * 10), int(nose_2d[1] - x * 10))
 
-    #             face_2d = np.array(face_2d, dtype=np.float64)
-    #             face_3d = np.array(face_3d, dtype=np.float64)
+        # cv2.line(image, p1, p2, (255, 0, 0), 3)
 
-    #             focal_length = img_w
-    #             cam_matrix = np.array(
-    #                 [
-    #                     [focal_length, 0, img_h / 2],
-    #                     [0, focal_length, img_w / 2],
-    #                     [0, 0, 1],
-    #                 ],
-    #                 dtype="double",
-    #             )
-    #             distortion_matrix = np.zeros((4, 1), dtype=np.float64)  # no distortion
-    #             #  find out where the camera is in relation to the object and its orientation.
-    #             # the output rotation and translation vectors tell you how the object is oriented and positioned relative to the camera in the 3D world.
-    #             success, rotation_vector, translation_vector = cv2.solvePnP(
-    #                 face_3d, face_2d, cam_matrix, distortion_matrix
-    #             )
-    #             rotation_matrix, jacobian_matrix = cv2.Rodrigues(rotation_vector)
-    #             angles, mtx, dist, rvecs, tvecs, _ = cv2.RQDecomp3x3(rotation_matrix)
+        # cv2.putText(
+        #     image, text, (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2
+        # )
+        # cv2.putText(
+        #     image,
+        #     "X: " + str(x),
+        #     (20, 100),
+        #     cv2.FONT_HERSHEY_SIMPLEX,
+        #     1,
+        #     (0, 0, 0),
+        #     2,
+        # )
+        # cv2.putText(
+        #     image,
+        #     "Y: " + str(y),
+        #     (20, 150),
+        #     cv2.FONT_HERSHEY_SIMPLEX,
+        #     1,
+        #     (0, 0, 0),
+        #     2,
+        # )
+        # cv2.putText(
+        #     image,
+        #     "Z: " + str(z),
+        #     (20, 200),
+        #     cv2.FONT_HERSHEY_SIMPLEX,
+        #     1,
+        #     (0, 0, 0),
+        #     2,
+        # )
 
-    #             x = angles[0] * 360  # because normalized
-    #             y = angles[1] * 360
-    #             z = angles[2] * 360
-
-    #             if y < -10:
-    #                 text = "Looking left"
-    #             elif y > 10:
-    #                 text = "Looking down"
-    #             elif x > 10:
-    #                 text = "Looking down"
-    #             elif x < -10:
-    #                 text = "Looking up"
-    #             else:
-    #                 text = "Looking straight"
-
-    #             nose_3d_projection, jacobian = cv2.projectPoints(
-    #                 nose_3d,
-    #                 rotation_vector,
-    #                 translation_vector,
-    #                 cam_matrix,
-    #                 distortion_matrix,
-    #             )
-
-    #             p1 = (int(nose_2d[0]), int(nose_2d[1]))
-    #             p2 = (int(nose_2d[0] + y * 10), int(nose_2d[1] - x * 10))
-
-    #             cv2.line(image, p1, p2, (255, 0, 0), 3)
-
-    #             cv2.putText(
-    #                 image, text, (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2
-    #             )
-    #             cv2.putText(
-    #                 image,
-    #                 "X: " + str(x),
-    #                 (20, 100),
-    #                 cv2.FONT_HERSHEY_SIMPLEX,
-    #                 1,
-    #                 (0, 0, 0),
-    #                 2,
-    #             )
-    #             cv2.putText(
-    #                 image,
-    #                 "Y: " + str(y),
-    #                 (20, 150),
-    #                 cv2.FONT_HERSHEY_SIMPLEX,
-    #                 1,
-    #                 (0, 0, 0),
-    #                 2,
-    #             )
-    #             cv2.putText(
-    #                 image,
-    #                 "Z: " + str(z),
-    #                 (20, 200),
-    #                 cv2.FONT_HERSHEY_SIMPLEX,
-    #                 1,
-    #                 (0, 0, 0),
-    #                 2,
-    #             )
-
-    #             mp_drawing.draw_landmarks(
-    #                 image,
-    #                 face_landmarks,
-    #                 mp_face_mesh.FACEMESH_TESSELATION,
-    #                 drawing_spec,
-    #             )
-    #             cv2.imshow("Head Pose", image)
-    #             cv2.waitKey(0)  # Waits indefinitely for a key press
-    #             cv2.destroyAllWindows()
+        return (x, y, z)

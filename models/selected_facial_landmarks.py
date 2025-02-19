@@ -1,19 +1,21 @@
+from mediapipe.framework.formats.landmark_pb2 import NormalizedLandmark
+
 
 
 class SelectedFacialLandmarks:
     def __init__(
         self,
-        inner_brow_left,
-        outer_brow_left,
-        inner_brow_right,
-        outer_brow_right,
-        eye_outer_left,
-        eye_outer_right,
-        eye_inner_left,
-        eye_inner_right,
-        outer_lip_height,
-        inner_lip_height,
-        lip_corner_distance,
+        inner_brow_left: NormalizedLandmark,
+        outer_brow_left: NormalizedLandmark,
+        inner_brow_right: NormalizedLandmark,
+        outer_brow_right: NormalizedLandmark,
+        eye_outer_left: NormalizedLandmark,
+        eye_outer_right: NormalizedLandmark,
+        eye_inner_left: NormalizedLandmark,
+        eye_inner_right: NormalizedLandmark,
+        outer_lip_height: float,
+        inner_lip_height: float,
+        lip_corner_distance: float,
         **kwargs
     ):
         self.inner_brow_left = inner_brow_left
