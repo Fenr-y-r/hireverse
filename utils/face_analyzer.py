@@ -93,53 +93,45 @@ class FaceAnalyzer:
         return None
     
 
-    def denormalize_landmarks(self, landmark: NormalizedLandmark, img) -> Tuple[int, int]:
+    def denormalize_landmarks_without_Z(self, landmark: NormalizedLandmark, img) -> Tuple[int, int]:
         """
-        Denormalize the landmarks to the original image size 
+        Denormalize the landmarks to the original image size and ignores Z axis.
         """
         img_w , img_h = img.shape[1], img.shape[0]
         ordered_pair= landmark
         return (int(ordered_pair.x * img_w), int(ordered_pair.y * img_h))
 
-
-
-
-
-
-
-
-
-
     def _get_brow_interest_points(
         self, face_interest_points
     ) -> Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int], Tuple[int, int]]:
-        outer_brow_left = face_interest_points[17]
-        inner_brow_left = face_interest_points[21]
-        inner_brow_right = face_interest_points[22]
-        outer_brow_right = face_interest_points[26]
+        outer_brow_left = face_interest_points[276]
+        inner_brow_left = face_interest_points[285]
+
+        inner_brow_right = face_interest_points[55]
+        outer_brow_right = face_interest_points[46]
         return (outer_brow_left, inner_brow_left, inner_brow_right, outer_brow_right)
 
     def _get_eye_interest_points(
         self, face_interest_points: List[Tuple[int, int]]
     ) -> Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int], Tuple[int, int]]:
-        eye_outer_left = face_interest_points[36]
-        eye_outer_right = face_interest_points[45]
-        eye_inner_left = face_interest_points[39]
-        eye_inner_right = face_interest_points[42]
+        eye_outer_left = face_interest_points[33]
+        eye_inner_left = face_interest_points[133]
+        eye_inner_right = face_interest_points[362]
+        eye_outer_right = face_interest_points[263]
         return (eye_outer_left, eye_outer_right, eye_inner_left, eye_inner_right)
 
     def get_lips_coordinates(self, face_interest_points: List[Tuple[int, int]]):
-        outer_lip_above = face_interest_points[51]
-        outer_lip_below = face_interest_points[57]
-        inner_lip_above = face_interest_points[62]
-        inner_lip_below = face_interest_points[66]
-        lip_corner_right = face_interest_points[54]
-        lip_corner_left = face_interest_points[48]
+        outer_upper_lip = face_interest_points[0]
+        inner_upper_lip = face_interest_points[13]
+        inner_lower_lip = face_interest_points[14]
+        outer_lower_lip = face_interest_points[17]
+        lip_corner_right = face_interest_points[291]
+        lip_corner_left = face_interest_points[61]
         return (
-            outer_lip_above,
-            outer_lip_below,
-            inner_lip_above,
-            inner_lip_below,
+            outer_upper_lip,
+            outer_lower_lip,
+            inner_upper_lip,
+            inner_lower_lip,
             lip_corner_right,
             lip_corner_left,
         )

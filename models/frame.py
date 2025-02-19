@@ -86,8 +86,8 @@ class Frame:
         (x, y, w, h) = x_y_w_h_tuple
         cv2.rectangle(self.copied_image_for_drawing, (x, y), (x + w, y + h), color, 2)
 
-    def draw_cirle(self, coordinates, color=(0, 255, 255)):
-        cv2.circle(self.copied_image_for_drawing, coordinates, 2, color, -1)
+    def draw_cirle(self, coordinates, color=(0, 255, 255), radius = 1):
+        cv2.circle(self.copied_image_for_drawing, coordinates, radius, color, -1)
 
     def draw_line(self, start_coordinates, end_coordinates, color=(0, 255, 0)):
         cv2.line(
