@@ -207,10 +207,8 @@ class FaceAnalyzer:
         face_2d = []
 
         for i, landmark in enumerate(face_landmarks):
+            # left eye (33), right eye (263), mouth left corner (61), mouth right corner (291), chin (199)
             if i == 33 or i == 263 or i == 1 or i == 61 or i == 291 or i == 199:
-                # if i == 1:
-                    # nose_2d = (landmark.x * img_w, landmark.y * img_h)
-                    # nose_3d = (landmark.x, landmark.y, landmark.z * 3000)
                 x, y = denormalize_int(landmark.x, img_w), denormalize_int(landmark.y, img_h)
                 face_2d.append([x, y])
                 # Z is an estimated depth coordinate relative to the camera calculated using a machine learning mode. It is not an absolute distance, but rather a value indicating how far a landmark is from the image plane.
@@ -222,80 +220,64 @@ class FaceAnalyzer:
         face_3d = np.array(face_3d, dtype=np.float64)
 
         focal_length = img_w
+        # Camera matrix is used in 3D reconstruction (convert 3D world coords into 2D image points)
         cam_matrix = np.array(
             [
                 [focal_length, 0, img_h / 2],
-                [0, focal_length, img_w / 2],
-                [0, 0, 1],
+                [0, focal_length, img_w / 2],   # (Cx,Cy) = principal point (optical center) (the center of the camera sensor)
+                [0, 0, 1],  # ensures the transformation remains in homogeneous coordinates.
             ],
             dtype="double",
         )
         distortion_matrix = np.zeros((4, 1), dtype=np.float64)  # no distortion
-        #  find out where the camera is in relation to the object and its orientation.
-        # the output rotation and translation vectors tell you how the object is oriented and positioned relative to the camera in the 3D world.
-        success, rotation_vector, translation_vector = cv2.solvePnP(
+        # This function estimates the pose of a 3D object (like a face) by finding the rotation vector and translation vector that map 3D points (face_3d) onto 2D points (face_2d).
+        _, rotation_vector, _ = cv2.solvePnP(   # 3*1 array of a vector in axis-angle form. It represents the axis (x,y,z) and the angle of rotation (which is the vector magnitude) about the axis.
             face_3d, face_2d, cam_matrix, distortion_matrix
         )
-        rotation_matrix, jacobian_matrix = cv2.Rodrigues(rotation_vector)
-        angles, mtx, dist, rvecs, tvecs, _ = cv2.RQDecomp3x3(rotation_matrix)
+        rotation_matrix, _ = cv2.Rodrigues(rotation_vector) # 3*3 matrix # This means that when applied to a 3D point, it will rotate it accordingly.
+        angles, _, _, _, _, _ = cv2.RQDecomp3x3(rotation_matrix)
 
-        x = angles[0] * 360 # because normalized
-        y = angles[1] * 360
-        z = angles[2] * 360
+        x, y, z = [360 * angle for angle in angles]
 
-        if y < -10:
-            text = "Looking left"
-        elif y > 10:
-            text = "Looking down"
-        elif x > 10:
-            text = "Looking down"
-        elif x < -10:
-            text = "Looking up"
-        else:
-            text = "Looking straight"
-
-        # nose_3d_projection, jacobian = cv2.projectPoints(
-        #     nose_3d,
-        #     rotation_vector,
-        #     translation_vector,
-        #     cam_matrix,
-        #     distortion_matrix,
-        # )
-
-        # p1 = (int(nose_2d[0]), int(nose_2d[1]))
-        # p2 = (int(nose_2d[0] + y * 10), int(nose_2d[1] - x * 10))
-
-        # cv2.line(image, p1, p2, (255, 0, 0), 3)
-
-        # cv2.putText(
-        #     image, text, (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2
-        # )
-        # cv2.putText(
-        #     image,
-        #     "X: " + str(x),
-        #     (20, 100),
-        #     cv2.FONT_HERSHEY_SIMPLEX,
-        #     1,
-        #     (0, 0, 0),
-        #     2,
-        # )
-        # cv2.putText(
-        #     image,
-        #     "Y: " + str(y),
-        #     (20, 150),
-        #     cv2.FONT_HERSHEY_SIMPLEX,
-        #     1,
-        #     (0, 0, 0),
-        #     2,
-        # )
-        # cv2.putText(
-        #     image,
-        #     "Z: " + str(z),
-        #     (20, 200),
-        #     cv2.FONT_HERSHEY_SIMPLEX,
-        #     1,
-        #     (0, 0, 0),
-        #     2,
-        # )
+        # if y < -10:
+        #     text = "Looking left"
+        # elif y > 10:
+        #     text = "Looking down"
+        # elif x > 10:
+        #     text = "Looking down"
+        # elif x < -10:
+        #     text = "Looking up"
+        # else:
+        #     text = "Looking straight"
 
         return (x, y, z)
+    
+
+
+    # def get_frames(self):
+    #     import os
+    #     import re
+    #     import cv2
+    #     import random
+
+    #     from models.frame import Frame
+
+    #     frames = []  # List to store the extracted frames
+    #     files = sorted(os.listdir(folder_path))
+    #     files.sort(key=lambda f: int(re.search(r'\d+', f).group()))
+    #     for f in files:
+    #         if f.endswith(".avi") and not f.startswith("PP"):
+    #             file_path = os.path.join(folder_path, f) 
+    #             cap = cv2.VideoCapture(file_path)  
+    #             total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))  # Get total frame count
+
+    #             middle_frame = random.randint(total_frames // 4, 3 * total_frames // 4)  
+    #             cap.set(cv2.CAP_PROP_POS_FRAMES, middle_frame)  #  move the pointer to the desired frame 
+
+    #             success, frame_image = cap.read() # grabs the frame at the current position.
+    #             cap.release() 
+    #             participant_number = re.search(r'\d+', f).group()
+    #             if success:
+    #                 frames.append(Frame(participant_number, participant_number, frame_image))  
+    #             else:
+    #                 print(f"Could not read frame {middle_frame} from {f}")

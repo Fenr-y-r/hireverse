@@ -59,8 +59,9 @@ class Frame:
 
 
     def put_face_angles(self):
-        for i, angle_name in enumerate("XYZ"):
-            self.put_text(f"{angle_name}: {round(self.face_angles[i], 1)}", (20, 20 + i * 20))
+        if self.face_angles:
+            for i, angle_name in enumerate("XY"):
+                self.put_text(f"{angle_name}: {round(self.face_angles[i], 1)}", (20, 20 + i * 20))
 
     def draw_selected_facial_landmarks(self, draw_lines=True):
         self._create_drawable_image_copy_if_not_exist()
