@@ -5,6 +5,10 @@ import mediapipe as mp
 from typing import List, Tuple
 import numpy as np
 from mediapipe.framework.formats.landmark_pb2 import NormalizedLandmark
+import os
+import re
+import cv2
+import random
 
 from models.frame import Frame
 from models.selected_facial_landmarks import SelectedFacialLandmarks
@@ -14,7 +18,7 @@ class FaceAnalyzer:
     face_mesh = mp.solutions.face_mesh.FaceMesh(
             static_image_mode=True, min_detection_confidence=0.5
     )        
-
+    FOLDER_PATH = "./datasets/MIT/Videos/"
 
     def _calculate_face_area(self, face):
         (x, y, w, h) = face
@@ -236,13 +240,19 @@ class FaceAnalyzer:
         )
         rotation_matrix, _ = cv2.Rodrigues(rotation_vector) # 3*3 matrix # This means that when applied to a 3D point, it will rotate it accordingly.
         angles, _, _, _, _, _ = cv2.RQDecomp3x3(rotation_matrix)
+        angles_add = [0,0,0]
+        if not isWebcam:
+            angles_add = [5, 6, 0]
+        
 
-        x, y, z = [360 * angle for angle in angles]
+        x = angles[0] * 360 + angles_add[0]
+        y = angles[1] * 360 + angles_add[1]
+        z = angles[2] * 360 + angles_add[2]
 
         # if y < -10:
         #     text = "Looking left"
         # elif y > 10:
-        #     text = "Looking down"
+        #     text = "Looking right"
         # elif x > 10:
         #     text = "Looking down"
         # elif x < -10:
@@ -252,32 +262,37 @@ class FaceAnalyzer:
 
         return (x, y, z)
     
-
-
-    # def get_frames(self):
-    #     import os
-    #     import re
-    #     import cv2
-    #     import random
-
-    #     from models.frame import Frame
-
-    #     frames = []  # List to store the extracted frames
-    #     files = sorted(os.listdir(folder_path))
-    #     files.sort(key=lambda f: int(re.search(r'\d+', f).group()))
-    #     for f in files:
-    #         if f.endswith(".avi") and not f.startswith("PP"):
-    #             file_path = os.path.join(folder_path, f) 
-    #             cap = cv2.VideoCapture(file_path)  
-    #             total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))  # Get total frame count
-
-    #             middle_frame = random.randint(total_frames // 4, 3 * total_frames // 4)  
-    #             cap.set(cv2.CAP_PROP_POS_FRAMES, middle_frame)  #  move the pointer to the desired frame 
-
-    #             success, frame_image = cap.read() # grabs the frame at the current position.
-    #             cap.release() 
-    #             participant_number = re.search(r'\d+', f).group()
-    #             if success:
-    #                 frames.append(Frame(participant_number, participant_number, frame_image))  
-    #             else:
-    #                 print(f"Could not read frame {middle_frame} from {f}")
+    def get_one_frame_per_video(self) -> List[Frame]:
+        frames = []
+        files = sorted(os.listdir(FaceAnalyzer.FOLDER_PATH))
+        files.sort(key=lambda f: int(re.search(r'\d+', f).group()))
+        for f in files:
+            if f.endswith(".avi") and not f.startswith("PP"):
+                file_path = os.path.join(FaceAnalyzer.FOLDER_PATH, f) 
+                cap = cv2.VideoCapture(file_path)  
+                total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) 
+                middle_frame = random.randint(total_frames // 4, 3 * total_frames // 4)  
+                cap.set(cv2.CAP_PROP_POS_FRAMES, middle_frame)  #  move the pointer to the desired frame 
+                success, frame_image = cap.read() # grabs the frame at the current position.
+                cap.release() 
+                participant_number = re.search(r'\d+', f).group()
+                frames.append(Frame(participant_number, participant_number, frame_image,is_categorized_by_participant=True))  
+                
+        return frames
+    
+    def get_video_frames(self, participant_number: str, num_selected_frames :int=None) -> List[Frame]:
+        video_path = os.path.join(FaceAnalyzer.FOLDER_PATH, f"P{participant_number}.avi")
+        frames: List[Frame] = []
+        cap = cv2.VideoCapture(video_path)
+        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        indices = range(frame_count)
+        if num_selected_frames:
+            indices = sorted(random.sample(range(frame_count), num_selected_frames)) 
+        for index in indices:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, index) 
+            ret, frame_image = cap.read()
+            frames.append(Frame(len(frames), participant_number, frame_image))
+        cap.release()
+        return frames
+    
+    

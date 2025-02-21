@@ -10,7 +10,7 @@ from models.selected_facial_landmarks import SelectedFacialLandmarks
 
 class Frame:
 
-    def __init__(self, index: int, participant: str, image: np.ndarray):
+    def __init__(self, index: int, participant: str, image: np.ndarray, is_categorized_by_participant: bool = False):
         self.index = index
         self.participant = participant
         self.image = image
@@ -24,6 +24,7 @@ class Frame:
         self.faces = None
         self.facial_landmarks_obj = None
         self.face_angles: Tuple[int, int, int] = None
+        self.is_categorized_by_participant = is_categorized_by_participant
 
     def _create_drawable_image_copy_if_not_exist(self):
         if self.copied_image_for_drawing is None:
@@ -132,6 +133,6 @@ class Frame:
     def display(self):
         self._create_drawable_image_copy_if_not_exist()
         plt.imshow(cv2.cvtColor(self.copied_image_for_drawing, cv2.COLOR_BGR2RGB))
-        plt.title(f"Frame {self.index}")
+        plt.title(("Participant" if self.is_categorized_by_participant else " Frame") +  str(self.index))
         plt.axis("off")
         plt.show()
