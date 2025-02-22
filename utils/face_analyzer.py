@@ -1,4 +1,5 @@
 import math
+import time
 import matplotlib.pyplot as plt
 import cv2
 import mediapipe as mp
@@ -198,69 +199,60 @@ class FaceAnalyzer:
         return None
     
     def get_face_angles(self, image, face_landmarks: list[NormalizedLandmark], isWebcam=False):
-        """
-        returns a rounded tuple (x, y, z) representing the angles of the face in degrees.
-        """
-        # if isWebcam:
-        #     image = cv2.flip(image, 1)
-        # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        if face_landmarks is None:
-            return None
-        img_h, img_w, img_channels_number = image.shape
-        face_3d = []
-        face_2d = []
+        def _rotation_matrix_to_angles(rotation_matrix):
+            """
+            returns a rounded tuple (x, y, z) representing the angles of the face in degrees.
+            """
+            x = math.atan2(rotation_matrix[2, 1], rotation_matrix[2, 2])
+            y = math.atan2(-rotation_matrix[2, 0], math.sqrt(rotation_matrix[0, 0] ** 2 +
+                                                            rotation_matrix[1, 0] ** 2))
+            z = math.atan2(rotation_matrix[1, 0], rotation_matrix[0, 0])
+            return np.array([x, y, z]) * 180. / math.pi
 
-        for i, landmark in enumerate(face_landmarks):
-            # left eye (33), right eye (263), mouth left corner (61), mouth right corner (291), chin (199)
-            if i == 33 or i == 263 or i == 1 or i == 61 or i == 291 or i == 199:
-                x, y = denormalize_int(landmark.x, img_w), denormalize_int(landmark.y, img_h)
-                face_2d.append([x, y])
-                # Z is an estimated depth coordinate relative to the camera calculated using a machine learning mode. It is not an absolute distance, but rather a value indicating how far a landmark is from the image plane.
-                # The model does not compute actual physical depth (in meters or cm). Instead, it predicts a relative depth value, where larger negative Z-values mean landmarks are deeper (farther from the camera).
-                # The Z-values are normalized relative to the bounding box size of the detected face. If the face appears closer to the camera, the bounding box is larger, and the Z-values may be scaled differently.
-                face_3d.append([x, y, landmark.z])
+        face_coordination_in_real_world = np.array([
+            [285, 528, 200],
+            [285, 371, 152],
+            [197, 574, 128],
+            [173, 425, 108],
+            [360, 574, 128],
+            [391, 425, 108]
+        ], dtype=np.float64)
 
-        face_2d = np.array(face_2d, dtype=np.float64)
-        face_3d = np.array(face_3d, dtype=np.float64)
-
-        focal_length = img_w
-        # Camera matrix is used in 3D reconstruction (convert 3D world coords into 2D image points)
-        cam_matrix = np.array(
-            [
-                [focal_length, 0, img_h / 2],
-                [0, focal_length, img_w / 2],   # (Cx,Cy) = principal point (optical center) (the center of the camera sensor)
-                [0, 0, 1],  # ensures the transformation remains in homogeneous coordinates.
-            ],
-            dtype="double",
-        )
-        distortion_matrix = np.zeros((4, 1), dtype=np.float64)  # no distortion
-        # This function estimates the pose of a 3D object (like a face) by finding the rotation vector and translation vector that map 3D points (face_3d) onto 2D points (face_2d).
-        _, rotation_vector, _ = cv2.solvePnP(   # 3*1 array of a vector in axis-angle form. It represents the axis (x,y,z) and the angle of rotation (which is the vector magnitude) about the axis.
-            face_3d, face_2d, cam_matrix, distortion_matrix
-        )
-        rotation_matrix, _ = cv2.Rodrigues(rotation_vector) # 3*3 matrix # This means that when applied to a 3D point, it will rotate it accordingly.
-        angles, _, _, _, _, _ = cv2.RQDecomp3x3(rotation_matrix)
-        angles_add = [0,0,0]
-        if not isWebcam:
-            angles_add = [5, 6, 0]
+        h, w, _ = image.shape
+        face_coordination_in_image = []
         
+        for idx, lm in enumerate(face_landmarks):
+            if idx in [1, 9, 57, 130, 287, 359]:
+                x, y = int(lm.x * w), int(lm.y * h)
+                face_coordination_in_image.append([x, y])
 
-        x = angles[0] * 360 + angles_add[0]
-        y = angles[1] * 360 + angles_add[1]
-        z = angles[2] * 360 + angles_add[2]
+        face_coordination_in_image = np.array(face_coordination_in_image,
+                                            dtype=np.float64)
 
-        # if y < -10:
-        #     text = "Looking left"
-        # elif y > 10:
-        #     text = "Looking right"
-        # elif x > 10:
-        #     text = "Looking down"
-        # elif x < -10:
-        #     text = "Looking up"
-        # else:
-        #     text = "Looking straight"
+        focal_length = 1 * w
+        cam_matrix = np.array([[focal_length, 0, w / 2],
+                            [0, focal_length, h / 2],
+                            [0, 0, 1]])
+        dist_matrix = np.zeros((4, 1), dtype=np.float64)
 
-        return (x, y, z)
+        success, rotation_vec, transition_vec = cv2.solvePnP(
+            face_coordination_in_real_world, face_coordination_in_image,
+            cam_matrix, dist_matrix)
+
+        rotation_matrix, jacobian = cv2.Rodrigues(rotation_vec)
+
+        result = _rotation_matrix_to_angles(rotation_matrix)
+        if not isWebcam:
+            add = [2,27,0]
+        else:
+            add = [0,0,0]
+        
+        for i  in range(len(result)):
+            result[i]= result[i]+ add[i]
+        
+        
+        return tuple(result)
+
     
     def get_one_frame_per_video(self) -> List[Frame]:
         frames = []
@@ -280,8 +272,14 @@ class FaceAnalyzer:
                 
         return frames
     
-    def get_video_frames(self, participant_number: str, num_selected_frames :int=None) -> List[Frame]:
+    def get_video_frames_for_participant(self, participant_number: str, num_selected_frames :int=None) -> List[Frame]:
         video_path = os.path.join(FaceAnalyzer.FOLDER_PATH, f"P{participant_number}.avi")
+        return self._get_video_frames(video_path,  participant_number , num_selected_frames)
+    
+    def get_video_frames(self, video_path , num_selected_frames :int=None) -> List[Frame]:
+        return self._get_video_frames(video_path, num_selected_frames= num_selected_frames)
+    
+    def _get_video_frames(self, video_path, participant_number=None,  num_selected_frames :int=None ,) -> List[Frame]:
         frames: List[Frame] = []
         cap = cv2.VideoCapture(video_path)
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -291,8 +289,9 @@ class FaceAnalyzer:
         for index in indices:
             cap.set(cv2.CAP_PROP_POS_FRAMES, index) 
             ret, frame_image = cap.read()
-            frames.append(Frame(len(frames), participant_number, frame_image))
+            frames.append(Frame(len(frames), participant_number if participant_number is not None else 0, frame_image))
         cap.release()
         return frames
-    
-    
+
+
+  
