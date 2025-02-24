@@ -4,6 +4,7 @@ import cv2
 import mediapipe as mp
 from typing import List, Tuple
 import numpy as np
+import utils.face_analyzer as fa
 from utils.utils import denormalize_landmarks_without_Z
 from models.selected_facial_landmarks import SelectedFacialLandmarks
 
@@ -57,7 +58,6 @@ class Frame:
                 ),
                 connection_drawing_spec=None,
             )
-
 
     def put_face_angles(self):
         if self.face_angles:
@@ -131,8 +131,9 @@ class Frame:
         )
 
     def display(self):
-        self._create_drawable_image_copy_if_not_exist()
-        plt.imshow(cv2.cvtColor(self.copied_image_for_drawing, cv2.COLOR_BGR2RGB))
-        plt.title(("Participant" if self.is_categorized_by_participant else " Frame") +  str(self.index))
-        plt.axis("off")
-        plt.show()
+
+        fa.FaceAnalyzer().display_image(
+            self.copied_image_for_drawing,
+                "Participant" if self.is_categorized_by_participant else " Frame"
+            
+            + str(self.index))
