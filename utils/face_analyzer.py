@@ -21,7 +21,7 @@ class FaceAnalyzer:
     face_mesh = mp.solutions.face_mesh.FaceMesh(
         static_image_mode=True, min_detection_confidence=0.5
     )
-    FOLDER_PATH = "./datasets/MIT/Videos/"
+    VIDEOS_FOLDER_PATH = "./MIT/Videos/"
 
     def _calculate_face_area(self, face):
         (x, y, w, h) = face
@@ -339,11 +339,11 @@ class FaceAnalyzer:
 
     def get_one_frame_per_video(self) -> List[Frame]:
         frames = []
-        files = sorted(os.listdir(FaceAnalyzer.FOLDER_PATH))
+        files = sorted(os.listdir(FaceAnalyzer.VIDEOS_FOLDER_PATH))
         files.sort(key=lambda f: int(re.search(r"\d+", f).group()))
         for f in files:
             if f.endswith(".avi") and not f.startswith("PP"):
-                file_path = os.path.join(FaceAnalyzer.FOLDER_PATH, f)
+                file_path = os.path.join(FaceAnalyzer.VIDEOS_FOLDER_PATH, f)
                 cap = cv2.VideoCapture(file_path)
                 total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
                 middle_frame = random.randint(total_frames // 4, 3 * total_frames // 4)
@@ -367,7 +367,7 @@ class FaceAnalyzer:
         return frames
 
     def get_folder_path(self, participant_number):
-        return os.path.join(FaceAnalyzer.FOLDER_PATH, f"P{participant_number}.avi")
+        return os.path.join(FaceAnalyzer.VIDEOS_FOLDER_PATH, f"P{participant_number}.avi")
 
     def get_video_frames_for_participant(
         self, participant_number: int, num_selected_frames: int = None, is_consecutive_frames=False
