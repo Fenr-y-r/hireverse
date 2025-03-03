@@ -25,7 +25,7 @@ class ProsodyAnalyzer:
             y=self.audio_waveform, sr=self.sr
         )  # total duration of the audio in seconds
 
-    def extract_pitch_features(self):
+    def _extract_pitch_features(self):
         f0 = librosa.yin(
             self.audio_waveform,
             fmin=50,
@@ -45,7 +45,7 @@ class ProsodyAnalyzer:
             ),  # Measures the consistency of pitch. A high standard deviation indicates frequent pitch changes.
         }
 
-    def extract_intensity_features(self):
+    def _extract_intensity_features(self):
         ShortTimeFourierTransform = np.abs(librosa.stft(self.audio_waveform))
         intensity = librosa.amplitude_to_db(
             ShortTimeFourierTransform, ref=np.max
@@ -64,7 +64,7 @@ class ProsodyAnalyzer:
             ),  # Measures the consistency of loudness. A high standard deviation indicates frequent changes in volume.
         }
 
-    def extract_formant_features(self, time_step=0.01):
+    def _extract_formant_features(self, time_step=0.01):
         formants = self.sound.to_formant_burg(
             time_step=time_step
         )  # computes the formants of the audio signal using Praat’s Burg algorithm.
@@ -119,7 +119,7 @@ class ProsodyAnalyzer:
             ),  # The cycle-to-cycle variability in amplitude.  # High shimmer indicates amplitude instability or voice roughness.
         }
 
-    def extract_pause_features(self, frame_duration=30):
+    def _extract_pause_features(self, frame_duration=30):
         vad = webrtcvad.Vad(
             1
         )  # Mode 0: Least aggressive (more likely to classify segments as speech). # Mode 3: Most aggressive (more likely to classify segments as non-speech).
@@ -155,7 +155,7 @@ class ProsodyAnalyzer:
 
         percent_unvoiced = (len(pauses) / len(frames)) * 100 if len(frames) > 0 else 0
 
-        self.save_audio(silence_audio)
+        # self.save_audio(silence_audio)
 
         return {
             "%_Unvoiced": percent_unvoiced,
@@ -164,7 +164,7 @@ class ProsodyAnalyzer:
             "Avg_Pause_Duration": np.mean(pauses) if pauses else 0,
         }
 
-    def save_audio(self, audio):
+    def _save_audio(self, audio):
         # Save the silent frames audio
         audio.export(
             "/Users/bassel27/personal_projects/facial_expressions_detection/silence_only.wav",
@@ -172,12 +172,15 @@ class ProsodyAnalyzer:
         )
 
     def extract_all_features(self):
+        """
+        Return: a dictionary of all prosodic features extracted from the audio.
+        """
         features = {}
-        features.update(self.extract_pitch_features())
-        features.update(self.extract_intensity_features())
-        features.update(self.extract_formant_features())
+        features.update(self._extract_pitch_features())
+        features.update(self._extract_intensity_features())
+        features.update(self._extract_formant_features())
         features.update(self.extract_perturbation_features())
-        features.update(self.extract_pause_features())
+        features.update(self._extract_pause_features())
         features["Duration"] = self.duration
 
         return ProsodicFeatures(
