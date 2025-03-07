@@ -2,6 +2,7 @@ import os
 import librosa
 import numpy as np
 import parselmouth
+from librosa.effects import trim
 from parselmouth.praat import (
     call,
 )  # Praat is a gold standard for speech analysis, and parselmouth brings its capabilities to Python
@@ -18,68 +19,82 @@ class ProsodyAnalyzer:
             self.AUDIO_FOLDER_PATH, f"trimmed_P{participant_number}.wav"
         )
         self.audio_waveform, self.sr = librosa.load(
-            self.audio_path, sr=None
-        )  # y is the audio waveform as a NumPy array, sr: The sample rate of the audio (e.g., 44100 Hz) # The array elements are the amplitude values at different points in time.
-        self.sound = parselmouth.Sound(self.audio_path)
+            self.audio_path, sr=16000, mono=True, res_type="kaiser_best"
+        )  # audio waveform is a NumPy array, sr: The sample rate of the audio (e.g., 44100 Hz) # The array elements are the amplitude values at different points in time.
+        self.audio_waveform = librosa.util.normalize(self.audio_waveform)
+        self.sound = parselmouth.Sound(self.audio_waveform, sampling_frequency=self.sr)
         self.duration = librosa.get_duration(
             y=self.audio_waveform, sr=self.sr
         )  # total duration of the audio in seconds
 
     def _extract_pitch_features(self):
-        f0 = librosa.yin(
-            self.audio_waveform,
-            fmin=50,
-            fmax=500,  # fmin and fmax are the minimum and maximum frequencies of humans to be considered for pitch estimation.
-        )  # Fundamental frequency (F0) estimation using the YIN algorithm. # f0 is an array of pitch values (in Hz) for each frame of the audio.
+        pitch = self.sound.to_pitch()
+        f0 = pitch.selected_array['frequency']
+        f0 = f0[f0 > 0]  # Remove unvoiced frames
 
-        f0 = f0[f0 > 0]  # we keep only the voiced frames (where pitch is meaningful).
-        return {  #  If no voiced frames are found (e.g., complete silence), the method returns 0 for all features to avoid errors.
-            "F0_MEAN": np.mean(f0) if len(f0) > 0 else 0,
-            "F0_MIN": np.min(f0) if len(f0) > 0 else 0,
-            "F0_MAX": np.max(f0) if len(f0) > 0 else 0,
-            "F0_RANGE": (  #  Shows the variability in pitch. A larger range may indicate expressive speech.
-                np.ptp(f0) if len(f0) > 0 else 0
-            ),  # difference between max and min pitch
-            "F0_SD": (
-                np.std(f0) if len(f0) > 0 else 0
-            ),  # Measures the consistency of pitch. A high standard deviation indicates frequent pitch changes.
+        if len(f0) == 0:
+            return {k:0 for k in ["F0_MEAN", "F0_MIN", "F0_MAX", "F0_RANGE", "F0_SD"]}
+
+        return {
+        "F0_MEAN": np.mean(f0),
+        "F0_MIN": np.min(f0),
+        "F0_MAX": np.max(f0),
+        "F0_RANGE": np.ptp(f0),
+        "F0_SD": np.std(f0),
         }
 
     def _extract_intensity_features(self):
-        ShortTimeFourierTransform = np.abs(librosa.stft(self.audio_waveform))
-        intensity = librosa.amplitude_to_db(
-            ShortTimeFourierTransform, ref=np.max
-        )  # Converts the amplitude values of the STFT into decibels (dB), which is a logarithmic scale for measuring loudness.
+        # Calculate frame-wise RMS energy (time-domain intensity)
+        frame_length = 2048  # 93ms at 22050Hz (common for speech)
+        hop_length = 512
+        rms_energy = librosa.feature.rms(
+            y=self.audio_waveform, frame_length=frame_length, hop_length=hop_length
+        )[
+            0
+        ]  # Get 1D array
+
+        # Convert to dB for perceptual loudness (optional but matches your original approach)
+        rms_db = librosa.amplitude_to_db(rms_energy, ref=np.max)  # ref=1.0 for dBFS
+
         return {
-            "Intensity_MEAN": np.mean(
-                intensity
-            ),  # Useful for understanding the overall volume.
-            "Intensity_MIN": np.min(intensity),
-            "Intensity_MAX": np.max(intensity),
-            "Intensity_RANGE": np.ptp(
-                intensity
-            ),  # Shows the dynamic range of the audio. A larger range indicates more variation in loudness.
-            "Intensity_SD": np.std(
-                intensity
-            ),  # Measures the consistency of loudness. A high standard deviation indicates frequent changes in volume.
+            "Intensity_MEAN": np.mean(rms_db),
+            "Intensity_MIN": np.min(rms_db),
+            "Intensity_MAX": np.max(rms_db),
+            "Intensity_RANGE": np.ptp(rms_db),
+            "Intensity_SD": np.std(rms_db),
         }
 
     def _extract_formant_features(self, time_step=0.01):
+        F1_DEFAULT = 400  # Schwa vowel average
+        F2_DEFAULT = 1500
+        F3_DEFAULT = 2500
         formants = self.sound.to_formant_burg(
             time_step=time_step
         )  # computes the formants of the audio signal using Praat’s Burg algorithm.
         f1, f2, f3 = [], [], []
-        for time in np.arange(
-            0, self.duration, time_step
-        ):  # Generates a sequence of time points from 0 to self.duration (total audio length) with a step size of time_step.
+
+        for time in np.arange(0, self.duration, time_step):
             try:
-                f1.append(call(formants, "Get value at time", 1, time, "Hertz"))
-                f2.append(call(formants, "Get value at time", 2, time, "Hertz"))
-                f3.append(call(formants, "Get value at time", 3, time, "Hertz"))
+                # Use parselmouth's built-in NaN handling
+                f1_val = formants.get_value_at_time(1, time)
+                f2_val = formants.get_value_at_time(2, time)
+                f3_val = formants.get_value_at_time(3, time)
+                if not np.isnan(f1_val):  # Filter out NaN values
+                    f1.append(f1_val)
+                    f2.append(f2_val)
+                    f3.append(f3_val)
             except:
                 continue
-        f2_f1_ratio = np.array(f2) / np.array(f1) if len(f1) > 0 else [0]
-        f3_f1_ratio = np.array(f3) / np.array(f1) if len(f1) > 0 else [0]
+
+        # Handle empty arrays
+        f1 = np.array(f1) if f1 else np.array([F1_DEFAULT])
+        f2 = np.array(f2) if f2 else np.array([F2_DEFAULT])
+        f3 = np.array(f3) if f3 else np.array([F3_DEFAULT])
+
+        # Safe division
+        with np.errstate(divide="ignore", invalid="ignore"):
+            f2_f1_ratio = np.divide(f2, f1, out=np.zeros_like(f2), where=f1 != 0)
+            f3_f1_ratio = np.divide(f3, f1, out=np.zeros_like(f3), where=f1 != 0)
         return {
             "F1_MEAN": np.mean(f1),
             "F1_SD": np.std(
@@ -102,7 +117,7 @@ class ProsodyAnalyzer:
     def extract_perturbation_features(self):
         pitch = call(self.sound, "To Pitch", 0.0, 50, 500)
 
-        point_process = call(self.sound, "To PointProcess (periodic, cc)...", 50, 500)
+        point_process = call(self.sound, "To PointProcess (periodic, cc)...", 75, 600)
         return {
             "Jitter": call(
                 point_process, "Get jitter (local)", 0, 0, 0.0001, 0.02, 1.3
@@ -137,29 +152,28 @@ class ProsodyAnalyzer:
         silence_audio = AudioSegment.silent(
             duration=0, frame_rate=16000
         )  # Empty silent track
-
+        total_speech_segments=0
         for i, frame in enumerate(frames):
             frame_bytes = frame.astype(np.int16).tobytes()  # Convert to PCM 16-bit
             if len(frame_bytes) == frame_size * 2:  # Ensure correct frame size
                 frame_contains_speech = vad.is_speech(frame_bytes, sample_rate=16000)
-
                 if not frame_contains_speech:
                     current_pause += frame_duration / 1000
                     silence_audio += AudioSegment(
                         frame_bytes, sample_width=2, frame_rate=16000, channels=1
                     )
                 else:
+                    total_speech_segments+=1
                     if current_pause > 0:
                         pauses.append(current_pause)
                         current_pause = 0
 
-        percent_unvoiced = (len(pauses) / len(frames)) * 100 if len(frames) > 0 else 0
-
-        # self.save_audio(silence_audio)
+        total_pause_duration = sum(pauses)
+        percent_unvoiced = (total_pause_duration / self.duration) * 100
 
         return {
             "%_Unvoiced": percent_unvoiced,
-            "%_Breaks": (len(pauses) / (len(pauses) + 1e-10)) * 100,
+            "%_Breaks": (len(pauses) / (total_speech_segments + 1e-10)) * 100,
             "Max_Pause_Duration": max(pauses) if pauses else 0,
             "Avg_Pause_Duration": np.mean(pauses) if pauses else 0,
         }
@@ -178,6 +192,7 @@ class ProsodyAnalyzer:
         features = {}
         features.update(self._extract_pitch_features())
         features.update(self._extract_intensity_features())
+
         features.update(self._extract_formant_features())
         features.update(self.extract_perturbation_features())
         features.update(self._extract_pause_features())
