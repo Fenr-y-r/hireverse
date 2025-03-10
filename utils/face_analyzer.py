@@ -14,7 +14,11 @@ from deepface import DeepFace
 import pandas as pd
 
 from models.frame import Frame
-from models.selected_facial_landmarks import SelectedFacialLandmarks
+from models.helper_facial_landmarks import HelperFacialLandmarks
+from models.selected_facial_landmarks import (
+    TwoLandmarksConnector,
+    SelectedFacialLandmarks,
+)
 
 
 class FaceAnalyzer:
@@ -87,12 +91,12 @@ class FaceAnalyzer:
     def get_face_roi_image(self, image, face, expand_ratio=1.0):
         """
         Extracts the face region of interest (ROI) from the image.
-        
+
         Args:
             image (numpy.ndarray): Input image.
             face (tuple): Face bounding box (x, y, w, h).
             expand_ratio (float): Ratio to expand the bounding box (default: 1.0).
-        
+
         Returns:
             numpy.ndarray: Cropped face ROI.
         """
@@ -171,9 +175,8 @@ class FaceAnalyzer:
 
         return None
 
-    def _get_brow_interest_points(
-        self, face_interest_points
-    ) -> Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int], Tuple[int, int]]:
+    # fmt: off
+    def _get_brow_interest_points(self, face_interest_points):
         outer_brow_left = face_interest_points[276]
         inner_brow_left = face_interest_points[285]
 
@@ -181,14 +184,18 @@ class FaceAnalyzer:
         outer_brow_right = face_interest_points[46]
         return (outer_brow_left, inner_brow_left, inner_brow_right, outer_brow_right)
 
-    def _get_eye_interest_points(
-        self, face_interest_points: List[Tuple[int, int]]
-    ) -> Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int], Tuple[int, int]]:
-        eye_outer_left = face_interest_points[33]
-        eye_inner_left = face_interest_points[133]
-        eye_inner_right = face_interest_points[362]
-        eye_outer_right = face_interest_points[263]
-        return (eye_outer_left, eye_outer_right, eye_inner_left, eye_inner_right)
+    def _get_eye_interest_points(self, face_interest_points: List[Tuple[int, int]]):
+        left_eye_outer = face_interest_points[446]  # change name
+        left_eye_inner = face_interest_points[362]
+        right_eye_inner = face_interest_points[133]
+        right_eye_outer = face_interest_points[35]  # change
+        
+        right_eye_upper =face_interest_points[159]
+        right_eye_lower =face_interest_points[145]
+        left_eye_upper = face_interest_points[386]
+        left_eye_lower = face_interest_points[374]
+        
+        return (left_eye_outer, right_eye_outer, left_eye_inner, right_eye_inner, right_eye_upper, right_eye_lower, left_eye_upper, left_eye_lower)
 
     def get_lips_coordinates(self, face_interest_points: List[Tuple[int, int]]):
         outer_upper_lip = face_interest_points[0]
@@ -229,47 +236,69 @@ class FaceAnalyzer:
         )
         return (outer_lip_height, inner_lip_height, lip_corner_distance)
 
-    def get_selected_facial_landmarks(
-        self, face_interest_points: List[Tuple[int, int, int]]
-    ) -> SelectedFacialLandmarks:
-        if face_interest_points:
-            (outer_brow_left, inner_brow_left, inner_brow_right, outer_brow_right) = (
-                self._get_brow_interest_points(face_interest_points)
-            )
-            (eye_outer_left, eye_outer_right, eye_inner_left, eye_inner_right) = (
-                self._get_eye_interest_points(face_interest_points)
-            )
-            (outer_lip_height, inner_lip_height, lip_corner_distance) = (
-                self._get_lip_lengths(face_interest_points)
-            )
-            (
-                outer_lip_above,
-                outer_lip_below,
-                inner_lip_above,
-                inner_lip_below,
-                lip_corner_right,
-                lip_corner_left,
-            ) = self.get_lips_coordinates(face_interest_points)
-            return SelectedFacialLandmarks(
-                inner_brow_left=inner_brow_left,
-                outer_brow_left=outer_brow_left,
-                inner_brow_right=inner_brow_right,
-                outer_brow_right=outer_brow_right,
-                eye_outer_left=eye_outer_left,
-                eye_outer_right=eye_outer_right,
-                eye_inner_left=eye_inner_left,
-                eye_inner_right=eye_inner_right,
-                outer_lip_height=outer_lip_height,
-                inner_lip_height=inner_lip_height,
-                lip_corner_distance=lip_corner_distance,
-                outer_lip_above=outer_lip_above,
-                outer_lip_below=outer_lip_below,
-                inner_lip_above=inner_lip_above,
-                inner_lip_below=inner_lip_below,
-                lip_corner_right=lip_corner_right,
-                lip_corner_left=lip_corner_left,
-            )
+    
+    def get_average_outer_brow_height(self, face_interest_points: List[Tuple[int, int]]) -> int:
+        (outer_brow_left, _, _, outer_brow_right) = (self._get_brow_interest_points(face_interest_points))
+        (left_eye_outer, right_eye_outer, _, _, _,_,_,_) = (self._get_eye_interest_points(face_interest_points))
+        left_outer_brow_height = self._euclidean_distance_between_two_interest_points(outer_brow_left, left_eye_outer)
+        right_outer_brow_height = self._euclidean_distance_between_two_interest_points(outer_brow_right, right_eye_outer)
+        return (left_outer_brow_height + right_outer_brow_height) / 2
+    
+    def get_average_inner_brow_height(self, face_interest_points: List[Tuple[int, int]]) -> int:
+        (_, inner_brow_left, inner_brow_right, _) = (self._get_brow_interest_points(face_interest_points))
+        (_, _, left_eye_inner, right_eye_inner, _, _, _, _) = (self._get_eye_interest_points(face_interest_points))
+        left_outer_brow_height = self._euclidean_distance_between_two_interest_points(inner_brow_left, left_eye_inner)
+        right_outer_brow_height = self._euclidean_distance_between_two_interest_points(inner_brow_right, right_eye_inner)
+        return (left_outer_brow_height + right_outer_brow_height) / 2
+
+    def get_eye_open(self, face_interest_points: List[Tuple[int, int]]):
+        (_, _, _, _, right_eye_upper, right_eye_lower, left_eye_upper, left_eye_lower) = (self._get_eye_interest_points(face_interest_points))
+        right_eye_open = self._euclidean_distance_between_two_interest_points(right_eye_upper, right_eye_lower)
+        left_eye_open = self._euclidean_distance_between_two_interest_points(left_eye_upper, left_eye_lower)
+        return (left_eye_open + right_eye_open) /2
+
+    def _get_helper_facial_landmarks(self, face_interest_points):
+        (outer_brow_left, inner_brow_left, inner_brow_right, outer_brow_right) = self._get_brow_interest_points(face_interest_points)
+        (left_eye_outer, right_eye_outer, left_eye_inner, right_eye_inner, right_eye_upper, right_eye_lower, left_eye_upper, left_eye_lower) = self._get_eye_interest_points(face_interest_points)
+        (outer_upper_lip,outer_lower_lip,inner_upper_lip,inner_lower_lip,lip_corner_right,lip_corner_left,) = self.get_lips_coordinates(face_interest_points)
+        return HelperFacialLandmarks(
+            inner_brow_left=inner_brow_left,
+            outer_brow_left=outer_brow_left,
+            inner_brow_right=inner_brow_right,
+            outer_brow_right=outer_brow_right,
+            left_eye_outer=left_eye_outer,
+            right_eye_outer=right_eye_outer,
+            left_eye_inner=left_eye_inner,
+            right_eye_inner=right_eye_inner,
+            outer_upper_lip=outer_upper_lip,
+            outer_lower_lip=outer_lower_lip,
+            inner_upper_lip=inner_upper_lip,
+            inner_lower_lip=inner_lower_lip,
+            lip_corner_right=lip_corner_right,
+            lip_corner_left=lip_corner_left,
+            right_eye_upper=right_eye_upper,
+            right_eye_lower=right_eye_lower,
+            left_eye_upper=left_eye_upper,
+            left_eye_lower=left_eye_lower
+        )
+
+    def get_selected_facial_landmarks(self, face_interest_points: list[Tuple[int, int, int]]) -> list[TwoLandmarksConnector]:
+        selected_facial_landmarks =[]
+        if face_interest_points:                
+            (outer_lip_above,outer_lip_below,inner_lip_above,inner_lip_below,lip_corner_right,lip_corner_left,) = self.get_lips_coordinates(face_interest_points)
+            (left_eye_outer, right_eye_outer, left_eye_inner, right_eye_inner, right_eye_upper, right_eye_lower, left_eye_upper, left_eye_lower) = (self._get_eye_interest_points(face_interest_points))
+            (outer_brow_left, inner_brow_left, inner_brow_right, outer_brow_right) = self._get_brow_interest_points(face_interest_points)
+
+            selected_facial_landmarks.append(TwoLandmarksConnector("average_outer_brow_height", (outer_brow_left, left_eye_outer, outer_brow_right, right_eye_outer)))
+            selected_facial_landmarks.append(TwoLandmarksConnector("average_inner_brow_height", (inner_brow_left, left_eye_inner, inner_brow_right, right_eye_inner)))
+            selected_facial_landmarks.append(TwoLandmarksConnector("eye_open", (right_eye_upper, right_eye_lower, left_eye_upper, left_eye_lower)))
+            selected_facial_landmarks.append(TwoLandmarksConnector("outer_lip_height", (outer_lip_above, outer_lip_below)))
+            selected_facial_landmarks.append(TwoLandmarksConnector("inner_lip_height", (inner_lip_above, inner_lip_below)))
+            selected_facial_landmarks.append(TwoLandmarksConnector("lip_corner_distance", (lip_corner_left, lip_corner_right)))
+
+            return selected_facial_landmarks
         return None
+    # fmt: on
 
     def get_face_angles(
         self, image, face_landmarks: list[NormalizedLandmark], isWebcam=False
@@ -285,6 +314,7 @@ class FaceAnalyzer:
             )
             z = math.atan2(rotation_matrix[1, 0], rotation_matrix[0, 0])
             return np.array([x, y, z]) * 180.0 / math.pi
+
         if face_landmarks is None:
             return None
         face_coordination_in_real_world = np.array(
@@ -367,10 +397,15 @@ class FaceAnalyzer:
         return frames
 
     def get_folder_path(self, participant_number):
-        return os.path.join(FaceAnalyzer.VIDEOS_FOLDER_PATH, f"P{participant_number}.avi")
+        return os.path.join(
+            FaceAnalyzer.VIDEOS_FOLDER_PATH, f"P{participant_number}.avi"
+        )
 
     def get_video_frames_for_participant(
-        self, participant_number: int, num_selected_frames: int = None, is_consecutive_frames=False
+        self,
+        participant_number: int,
+        num_selected_frames: int = None,
+        is_consecutive_frames=False,
     ) -> List[Frame]:
         video_path = self.get_folder_path(participant_number)
         return self._get_video_frames(
@@ -381,7 +416,7 @@ class FaceAnalyzer:
         )
 
     def get_video_frames(
-        self, video_path, num_selected_frames: int = None, is_consecutive = False
+        self, video_path, num_selected_frames: int = None, is_consecutive=False
     ) -> List[Frame]:
         return self._get_video_frames(
             video_path,
@@ -420,8 +455,6 @@ class FaceAnalyzer:
 
     def display_image(self, image, title=None):
         plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-        plt.title(
-            title
-        )
+        plt.title(title)
         plt.axis("off")
         plt.show()
