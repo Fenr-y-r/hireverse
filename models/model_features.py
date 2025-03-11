@@ -1,4 +1,3 @@
-
 from dataclasses import dataclass
 
 
@@ -42,7 +41,7 @@ class ProsodicFeatures:
 
     # Duration
     duration: float
-    
+
     def __str__(self):
         return (
             f"ProsodicFeatures("
@@ -54,3 +53,62 @@ class ProsodicFeatures:
             f"percent_unvoiced={self.percent_unvoiced}, percent_breaks={self.percent_breaks}, max_pause_duration={self.max_pause_duration}, avg_pause_duration={self.avg_pause_duration}, "
             f"duration={self.duration})"
         )
+
+
+@dataclass
+class FacialFeatures:
+    average_outer_brow_height_mean: float
+    average_inner_brow_height_mean: float
+    eye_open_mean: float
+    outer_lip_height_mean: float
+    inner_lip_height_mean: float
+    lip_corner_distance_mean: float
+    smile_mean: bool
+    pitch_mean: float
+    yaw_mean: float
+    roll_mean: float
+
+    average_outer_brow_height_std: float
+    average_inner_brow_height_std: float
+    eye_open_std: float
+    outer_lip_height_std: float
+    inner_lip_height_std: float
+    lip_corner_distance_std: float
+    smile_std: float
+    pitch_std: float
+    yaw_std: float
+    roll_std: float
+
+    average_outer_brow_height_min: float
+    average_inner_brow_height_min: float
+    eye_open_min: float
+    outer_lip_height_min: float
+    inner_lip_height_min: float
+    lip_corner_distance_min: float
+    smile_min: bool
+    pitch_min: float
+    yaw_min: float
+    roll_min: float
+
+    average_outer_brow_height_max: float
+    average_inner_brow_height_max: float
+    eye_open_max: float
+    outer_lip_height_max: float
+    inner_lip_height_max: float
+    lip_corner_distance_max: float
+    smile_max: bool
+    pitch_max: float
+    yaw_max: float
+    roll_max: float
+
+    average_outer_brow_height_median: float
+    average_inner_brow_height_median: float
+    eye_open_median: float
+    outer_lip_height_median: float
+    inner_lip_height_median: float
+    lip_corner_distance_median: float
+    smile_median: bool
+    pitch_median: float
+    yaw_median: float
+    roll_median: float
+

@@ -8,7 +8,7 @@ from parselmouth.praat import (
 )  # Praat is a gold standard for speech analysis, and parselmouth brings its capabilities to Python
 from pydub import AudioSegment
 import webrtcvad # Python library for Voice Activity Detection (VAD) # used to detect speech vs. non-speech segments in an audio signal.
-from models.prosodic_features import ProsodicFeatures
+from models.model_features import ProsodicFeatures
 
 
 class ProsodyAnalyzer:
@@ -108,14 +108,14 @@ class ProsodyAnalyzer:
             "F3_SD": np.std(
                 f3
             ),  # High F3_SD = Large changes in lip/pharynx shape (e.g., varied articulation). # Low F3_SD = Stable lip/pharynx shape (e.g., consistent articulation).
-            "F2/F1_MEAN": np.mean(f2_f1_ratio),
-            "F3/F1_MEAN": np.mean(f3_f1_ratio),
-            "F2/F1_SD": np.std(f2_f1_ratio),
-            "F3/F1_SD": np.std(f3_f1_ratio),
+            "F2_F1_MEAN": np.mean(f2_f1_ratio), # f2/f1_mean
+            "F3_F1_MEAN": np.mean(f3_f1_ratio),
+            "F2_F1_SD": np.std(f2_f1_ratio),
+            "F3_F1_SD": np.std(f3_f1_ratio),
         }
 
     def extract_perturbation_features(self):
-        pitch = call(self.sound, "To Pitch", 0.0, 50, 500)
+        # pitch = call(self.sound, "To Pitch", 0.0, 50, 500)
 
         point_process = call(self.sound, "To PointProcess (periodic, cc)...", 75, 600)
         return {
@@ -172,8 +172,8 @@ class ProsodyAnalyzer:
         percent_unvoiced = (total_pause_duration / self.duration) * 100
 
         return {
-            "%_Unvoiced": percent_unvoiced,
-            "%_Breaks": (len(pauses) / (total_speech_segments + 1e-10)) * 100,
+            "percent_Unvoiced": percent_unvoiced,
+            "percent_Breaks": (len(pauses) / (total_speech_segments + 1e-10)) * 100,
             "Max_Pause_Duration": max(pauses) if pauses else 0,
             "Avg_Pause_Duration": np.mean(pauses) if pauses else 0,
         }
@@ -181,7 +181,7 @@ class ProsodyAnalyzer:
     def _save_audio(self, audio):
         # Save the silent frames audio
         audio.export(
-            "/Users/bassel27/personal_projects/facial_expressions_detection/silence_only.wav",
+            "./silence_only.wav",
             format="wav",
         )
 
@@ -197,44 +197,5 @@ class ProsodyAnalyzer:
         features.update(self.extract_perturbation_features())
         features.update(self._extract_pause_features())
         features["Duration"] = self.duration
-
-        return ProsodicFeatures(
-        # Pitch Features
-        f0_mean=features["F0_MEAN"],
-        f0_min=features["F0_MIN"],
-        f0_max=features["F0_MAX"],
-        f0_range=features["F0_RANGE"],
-        f0_sd=features["F0_SD"],
-
-        # Intensity Features
-        intensity_mean=features["Intensity_MEAN"],
-        intensity_min=features["Intensity_MIN"],
-        intensity_max=features["Intensity_MAX"],
-        intensity_range=features["Intensity_RANGE"],
-        intensity_sd=features["Intensity_SD"],
-
-        # Formant Features
-        f1_mean=features["F1_MEAN"],
-        f1_sd=features["F1_SD"],
-        f2_mean=features["F2_MEAN"],
-        f2_sd=features["F2_SD"],
-        f3_mean=features["F3_MEAN"],
-        f3_sd=features["F3_SD"],
-        f2_f1_mean=features["F2/F1_MEAN"],
-        f3_f1_mean=features["F3/F1_MEAN"],
-        f2_f1_sd=features["F2/F1_SD"],
-        f3_f1_sd=features["F3/F1_SD"],
-
-        # Perturbation Features
-        jitter=features["Jitter"],
-        shimmer=features["Shimmer"],
-
-        # Pause Features
-        percent_unvoiced=features["%_Unvoiced"],
-        percent_breaks=features["%_Breaks"],
-        max_pause_duration=features["Max_Pause_Duration"],
-        avg_pause_duration=features["Avg_Pause_Duration"],
-
-        # Duration
-        duration=features["Duration"],
-    )
+        features = { k.lower():v for k,v in features.items()}
+        return ProsodicFeatures(**features)

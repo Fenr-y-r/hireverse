@@ -1,20 +1,5 @@
-from dataclasses import dataclass, field
 import math
 from mediapipe.framework.formats.landmark_pb2 import NormalizedLandmark
-from typing import Optional, Tuple
-
-from models.helper_facial_landmarks import HelperFacialLandmarks
-
-
-@dataclass
-class SelectedFacialLandmarks:
-    helper_facial_landmarks: HelperFacialLandmarks
-    outer_lip_height: float
-    inner_lip_height: float
-    lip_corner_distance: float
-    average_outer_brow_height: float
-    average_inner_brow_height: float
-    eye_open: float
 
 
 class TwoLandmarksConnector:
