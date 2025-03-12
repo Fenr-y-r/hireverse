@@ -1,12 +1,11 @@
+asposestorage==1.0.2
+deepface==0.0.93
+librosa==0.10.2.post1
 matplotlib==3.10.1
 mediapipe==0.10.21
 numpy==2.2.3
 opencv_contrib_python==4.11.0.86
 opencv_python==4.10.0.84
-utils==1.0.2
-asposestorage==1.0.2
-deepface==0.0.93
-librosa==0.10.2.post1
 pandas==2.2.3
 parselmouth==1.1.1
 pydub==0.25.1
