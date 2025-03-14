@@ -338,7 +338,6 @@ class FaceAnalyzer:
     ) -> List[Frame]:
         
         video_path = self.get_folder_path(participant_id, video_folder_path)
-        print(video_path)
         return self._get_video_frames(
             video_path,
             participant_id,

@@ -14,18 +14,11 @@ class FeatureStorage:
             self.csv_path = csv_path
 
     @classmethod
-    def save_to_csv(
-        cls,
-        participant_id,
-        prosodic_features: ProsodicFeatures,
-        facial_features: FacialFeatures,
-    ):
+    def save_to_csv(cls, participant_id: str, **features):
+        data = {"participant_id": participant_id}
 
-        data = {
-            "participant_id": participant_id,
-            **asdict(prosodic_features),  # Unpacks prosodic features
-            **asdict(facial_features),
-        }
+        for feature in features.values():
+            data.update(asdict(feature))
 
         df = pd.DataFrame([data])
 
