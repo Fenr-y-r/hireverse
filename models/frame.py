@@ -16,7 +16,7 @@ class Frame:
     def __init__(
         self,
         index: int,
-        participant: str,
+        particiwnt: str,
         image: np.ndarray,
         is_categorized_by_participant: bool = False,
     ):
