@@ -323,31 +323,25 @@ class FaceAnalyzer:
 
         return frames
 
-    def get_folder_path_for_first_time(self, participant_number):
+    def get_folder_path(self, participant_number, first_time:bool, video_folder_path:str):
         return os.path.join(
-            FaceAnalyzer.VIDEOS_FOLDER_PATH, f"P{participant_number}.avi"
-        )
-
-    def get_folder_path_for_second_time(self, participant_number):
-        return os.path.join(
-            FaceAnalyzer.VIDEOS_FOLDER_PATH, f"PP{participant_number}.avi"
+            video_folder_path, f"{participant_number}.avi"
         )
 
     def get_video_frames_for_participant(
         self,
-        participant_number: int,
+        participant_id: str,
         first_time: bool,
+        video_folder_path: str,
         num_selected_frames: int = None,
         is_consecutive_frames=False,
     ) -> List[Frame]:
-        if first_time:
-            video_path = self.get_folder_path_for_first_time(participant_number)
-        else:
-            video_path = self.get_folder_path_for_second_time(participant_number)
+
+        video_path = self.get_folder_path(participant_id, first_time, video_folder_path)
 
         return self._get_video_frames(
             video_path,
-            participant_number,
+            participant_id,
             num_selected_frames,
             is_consecutive_frames=is_consecutive_frames,
         )
@@ -364,7 +358,7 @@ class FaceAnalyzer:
     def _get_video_frames(
         self,
         video_path,
-        participant_number=None,
+        participant_id=None,
         num_selected_frames: int = None,
         is_consecutive_frames=False,
     ) -> List[Frame]:
@@ -383,7 +377,7 @@ class FaceAnalyzer:
             frames.append(
                 Frame(
                     index,
-                    participant_number if participant_number is not None else 0,
+                    participant_id if participant_id is not None else 0,
                     frame_image,
                 )
             )

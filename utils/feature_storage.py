@@ -8,7 +8,10 @@ from models.model_features import *
 
 
 class FeatureStorage:
-    CSV_PATH = "./interview_features.csv"
+
+    def __init__(self, csv_path: str ):
+        if csv_path:
+            self.csv_path = csv_path
 
     @classmethod
     def save_to_csv(
@@ -17,32 +20,34 @@ class FeatureStorage:
         prosodic_features: ProsodicFeatures,
         facial_features: FacialFeatures,
     ):
-        
 
         data = {
             "participant_id": participant_id,
             **asdict(prosodic_features),  # Unpacks prosodic features
-            **asdict(facial_features),  
+            **asdict(facial_features),
         }
 
         df = pd.DataFrame([data])
 
-        if not os.path.exists(cls.CSV_PATH):
+        if not os.path.exists(cls.csv_path):
             # Create new file if it doesn’t exist
-            df.to_csv(cls.CSV_PATH, index=False)
+            df.to_csv(cls.csv_path, index=False)
         else:
-            existing_df = pd.read_csv(cls.CSV_PATH)
+            existing_df = pd.read_csv(cls.csv_path)
             existing_ids = set(
                 existing_df["participant_id"]
             )  # # Convert participant_id column to a set for O(1) lookup
             if participant_id in existing_ids:
                 return
             df.to_csv(
-                cls.CSV_PATH, mode="a", header=False, index=False
+                cls.csv_path, mode="a", header=False, index=False
             )  # Append new row
 
     def aggregate_facial_features(self, frames: list[Frame]):
-        feature_names = [two_landmark_connector.name for two_landmark_connector in frames[0].two_landmarks_connectors]
+        feature_names = [
+            two_landmark_connector.name
+            for two_landmark_connector in frames[0].two_landmarks_connectors
+        ]
 
         # Initialize feature lists
         feature_lists = {name: [] for name in feature_names}
@@ -67,7 +72,7 @@ class FeatureStorage:
             "std": np.std,
             "min": np.min,
             "max": np.max,
-            "median": np.median
+            "median": np.median,
         }
 
         # Compute statistics dynamically

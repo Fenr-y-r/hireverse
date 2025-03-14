@@ -21,7 +21,7 @@ class Frame:
         is_categorized_by_participant: bool = False,
     ):
         self.index = index
-        self.participant = participant
+        self.participant_name = participant
         self.image = image
         self.smile_area = None
         self.face: Tuple[int, int, int, int] = None
