@@ -14,9 +14,9 @@ from models.model_features import ProsodicFeatures
 class ProsodyAnalyzer:
     AUDIO_FOLDER_PATH = "./MIT/interviewee_only_audio/"
 
-    def __init__(self, participant_number):
+    def __init__(self, participant_id:str):
         self.audio_path = os.path.join(
-            self.AUDIO_FOLDER_PATH, f"trimmed_P{participant_number}.wav"
+            self.AUDIO_FOLDER_PATH, f"trimmed_{participant_id}.wav"
         )
         self.audio_waveform, self.sr = librosa.load(
             self.audio_path, sr=16000, mono=True, res_type="kaiser_best"

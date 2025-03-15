@@ -13,34 +13,37 @@ class FeatureStorage:
         if csv_path:
             self.csv_path = csv_path
 
-    @classmethod
-    def save_to_csv(cls, participant_id: str, **features):
+    def save_to_csv(self, participant_id: str, *features):
         data = {"participant_id": participant_id}
-
-        for feature in features.values():
-            data.update(asdict(feature))
+        for feature in features:  # Iterate over tuple elements directly
+            data.update(asdict(feature)) 
 
         df = pd.DataFrame([data])
 
-        if not os.path.exists(cls.csv_path):
+        if not os.path.exists(self.csv_path):
             # Create new file if it doesn’t exist
-            df.to_csv(cls.csv_path, index=False)
+            df.to_csv(self.csv_path, index=False)
         else:
-            existing_df = pd.read_csv(cls.csv_path)
+            existing_df = pd.read_csv(self.csv_path)
             existing_ids = set(
                 existing_df["participant_id"]
-            )  # # Convert participant_id column to a set for O(1) lookup
+            )  # Convert participant_id column to a set for O(1) lookup
             if participant_id in existing_ids:
                 return
             df.to_csv(
-                cls.csv_path, mode="a", header=False, index=False
+                self.csv_path, mode="a", header=False, index=False
             )  # Append new row
 
+    def _get_feature_names(self, frames: list[Frame]):
+        for frame in frames:
+            if frame.two_landmarks_connectors is not None:
+                feature_names = [
+                    connector.name for connector in frame.two_landmarks_connectors
+                ]
+                return feature_names
+
     def aggregate_facial_features(self, frames: list[Frame]):
-        feature_names = [
-            two_landmark_connector.name
-            for two_landmark_connector in frames[0].two_landmarks_connectors
-        ]
+        feature_names = self._get_feature_names(frames)
 
         # Initialize feature lists
         feature_lists = {name: [] for name in feature_names}

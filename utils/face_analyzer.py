@@ -331,7 +331,6 @@ class FaceAnalyzer:
     def get_video_frames_for_participant(
         self,
         participant_id: str,
-        first_time: bool,
         video_folder_path: str,
         num_selected_frames: int = None,
         is_consecutive_frames=False,
