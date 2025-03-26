@@ -15,7 +15,7 @@ This module extracts facial features per frame using MediaPipe. It detects face 
   - Facial landmarks & distances (brow, eye, lip)
   - Head pose (face angles via solvePnP)
 
-<img width="450" alt="image" src="https://github.com/user-attachments/assets/9a62e4bc-6baf-4b9d-8e53-dcd60b8278c7"/> <img width="450" alt="image" src="https://github.com/user-attachments/assets/2c8e37ca-9d66-4231-9419-46026e2c6ad4" />
+<img width="400" alt="image" src="https://github.com/user-attachments/assets/9a62e4bc-6baf-4b9d-8e53-dcd60b8278c7"/> <img width="400" alt="image" src="https://github.com/user-attachments/assets/2c8e37ca-9d66-4231-9419-46026e2c6ad4" />
 
 ## B. Prosodic Features
 This extracts key prosodic features from interview audio to analyze speech expressiveness, fluency, and articulation. It combines Praat, Librosa, and WebRTC VAD for accurate speech analysis in interview assessments. Since these features are extracted per frame, they undergo statistical aggregation (mean, min, max, std) to get per video interview value. Prosodic features include:
