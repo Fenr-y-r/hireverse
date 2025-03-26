@@ -1,5 +1,7 @@
 # Hireverse
-<img width="571" alt="image" src="https://github.com/user-attachments/assets/112deae5-a9f6-46cd-b127-560955a0517e" />
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/112deae5-a9f6-46cd-b127-560955a0517e" width="571" alt="image">
+</p>
 
 This is an AI platform that, first, enables users to practice for job interviews and, second, helps companies in their recruitment process by conducting initial interviews with their applicants. The system has an AI avatar that conducts video interviews, asking questions, and also analyzes user performance through  speech, facial expressions, and responses. After the interview, the AI provides feedback about  both behavioral and technical aspects. This includes engagement, emotional cues, facial expressions, tone, confidence, and corrections for both behavioral and technical answers
 
