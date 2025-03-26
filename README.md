@@ -1,12 +1,35 @@
 # AI-Powered Interview Practice & Recruitment Platform
 This is an AI platform that, first, enables users to practice for job interviews and, second, helps companies in their recruitment process by conducting initial interviews with their applicants. The system has an AI avatar that conducts video interviews, asking questions, and also analyzes user performance through  speech, facial expressions, and responses. After the interview, the AI provides feedback about  both behavioral and technical aspects. This includes engagement, emotional cues, facial expressions, tone, confidence, and corrections for both behavioral and technical answers
 
-# Features:
-•	AI Video Interviews: Users interact with an AI avatar 
-•	Feature Extraction: Extraction of prosodic, facial and lexical features using multiprocessing
-•	Behavioral Questions Evaluation:
-•	Technical Questions Evaluation:
-•	Web App: Using React and Mongo DB
+# Features
+## 1. Feature Extraction
+Three types of features are extracted for the model training: prosodic, facial and lexical features. These features are extracted from the dataset using multiprocessing.
+### A. Facial Features
+This module extracts facial features using MediaPipe. It detects face landmarks, aligns faces, extracts regions of interest (ROI), and computes key facial metrics such as:
+  - Smile intensity (DeepFace)
+  - Face alignment (eye positioning)
+  - Facial landmarks & distances (brow, eye, lip)
+  - Head pose (face angles via solvePnP)
+
+It processes video frames and provides structured facial data for further analysis.
+
+<img width="509" alt="image" src="https://github.com/user-attachments/assets/9a62e4bc-6baf-4b9d-8e53-dcd60b8278c7" />
+
+<img width="508" alt="image" src="https://github.com/user-attachments/assets/2c8e37ca-9d66-4231-9419-46026e2c6ad4" />
+
+## B. Prosodic Features
+This extracts key prosodic features from interview audio to analyze speech expressiveness, fluency, and articulation. It combines Praat, Librosa, and WebRTC VAD for accurate speech analysis in interview assessments.
+
+## C. Lexical Features
+
+# 2. Avatar
+
+# 3. Behavioral Questions Evalution
+
+# 4. Technical Questions Evalution
+
+# 5. Web App
+Using Figma, React and Mongo DB
 
 # Dataset Citation
 This project utilizes the following dataset:
