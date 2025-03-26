@@ -47,7 +47,7 @@ class Frame:
     def draw_nose_line(self, p1, p2):
         self._create_drawable_image_copy_if_not_exist()
 
-    def draw_face(self):
+    def draw_face_border(self):
         self._create_drawable_image_copy_if_not_exist()
         if self.face is not None:
             self.draw_rectangle(self.face, (255, 0, 0))

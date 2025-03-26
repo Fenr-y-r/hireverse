@@ -174,8 +174,8 @@ class ProsodyAnalyzer:
         return {
             "percent_Unvoiced": percent_unvoiced,
             "percent_Breaks": (len(pauses) / (total_speech_segments + 1e-10)) * 100,    # how frequently someone stops speaking (breaks in fluency).
-            "Pause_Duration_max": max(pauses) if pauses else 0,
-            "Pause_Duration_avg": np.mean(pauses) if pauses else 0,
+            "max_Pause_Duration": max(pauses) if pauses else 0,
+            "avg_Pause_Duration": np.mean(pauses) if pauses else 0,
         }
 
     def _save_audio(self, audio):
