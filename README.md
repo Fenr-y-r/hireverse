@@ -12,5 +12,5 @@ This is an AI platform that, first, enables users to practice for job interviews
 This project utilizes the following dataset:
 I. Naim, I. Tanveer, D. Gildea, M. E. Hoque, Automated Analysis and Prediction of Job Interview Performance, to appear in IEEE Transactions on Affective Computing.
 
-<img src="https://github.com/user-attachments/assets/836201c4-81c4-4283-81a5-7ec33408ac0e" width="200">
+<img src="https://github.com/user-attachments/assets/836201c4-81c4-4283-81a5-7ec33408ac0e" width="500">
 
