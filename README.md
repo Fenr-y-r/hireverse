@@ -5,18 +5,21 @@ This is an AI platform that, first, enables users to practice for job interviews
 ## 1. Feature Extraction
 Three types of features are extracted for the model training: prosodic, facial and lexical features. These features are extracted from the dataset using multiprocessing.
 ### A. Facial Features
-This module extracts facial features using MediaPipe. It detects face landmarks, aligns faces, extracts regions of interest (ROI), and computes key facial metrics such as:
+This module extracts facial features per frame using MediaPipe. It detects face landmarks, aligns faces, extracts regions of interest (ROI), and computes aggregated facial metrics such as:
   - Smile intensity (DeepFace)
   - Face alignment (eye positioning)
   - Facial landmarks & distances (brow, eye, lip)
   - Head pose (face angles via solvePnP)
 
-It processes video frames and provides structured facial data for further analysis.
-
-<img width="400" alt="image" src="https://github.com/user-attachments/assets/9a62e4bc-6baf-4b9d-8e53-dcd60b8278c7"/> <img width="400" alt="image" src="https://github.com/user-attachments/assets/2c8e37ca-9d66-4231-9419-46026e2c6ad4" />
+<img width="450" alt="image" src="https://github.com/user-attachments/assets/9a62e4bc-6baf-4b9d-8e53-dcd60b8278c7"/> <img width="450" alt="image" src="https://github.com/user-attachments/assets/2c8e37ca-9d66-4231-9419-46026e2c6ad4" />
 
 ## B. Prosodic Features
-This extracts key prosodic features from interview audio to analyze speech expressiveness, fluency, and articulation. It combines Praat, Librosa, and WebRTC VAD for accurate speech analysis in interview assessments.
+This extracts key prosodic features from interview audio to analyze speech expressiveness, fluency, and articulation. It combines Praat, Librosa, and WebRTC VAD for accurate speech analysis in interview assessments. Since these features are extracted per frame, they undergo statistical aggregation (mean, min, max, std) to get per video interview value. Prosodic features include:
+  - Pitch
+  - Intensity
+  - Speaking rate
+  - Pause duration & frequency
+  - Jitter & shimmer (voice stability)
 
 ## C. Lexical Features
 
