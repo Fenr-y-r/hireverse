@@ -29,11 +29,10 @@ This extracts key prosodic features from interview audio to analyze speech expre
 
 # 2. Avatar
 
-# 3. Behavioral Questions Evalution
+# 3. Technical/ Behavioral Questions Evalution
+LangChain was used to integrate both behavioral and technical interview. The behavioral interview utilized Retrieval-Augmented Generation (RAG) with a structured question database to evaluate candidates’ communication skills, problem-solving skills, and professional experiences, identifying key weaknesses and areas for improvement. Based on these insights, the technical interview was dynamically adjusted using a separate technical question database, also powered by RAG, to assess coding skills, technical problem-solving abilities, and knowledge gaps. This structured, two-phase evaluation process ensured a personalized and realistic interview simulation to help candidates refine both their soft and technical skills.
 
-# 4. Technical Questions Evalution
-
-# 5. Web App
+# 4. Web App
 Using Figma, React and Mongo DB
 
 # Dataset Citation
