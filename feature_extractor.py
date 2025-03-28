@@ -10,13 +10,11 @@ import re
 def get_p_and_pp_participant_number():
     VIDEOS_FOLDER = "./MIT/Videos/"
     pp_pattern = re.compile(
-    r"^PP(\d+)",  # 'PP' at start, followed by digits
-    re.IGNORECASE
+        r"^PP(\d+)", re.IGNORECASE  # 'PP' at start, followed by digits
     )
 
     p_pattern = re.compile(
-        r"(?<!P)P(\d+)",  # 'P' not preceded by P/p, followed by digits
-        re.IGNORECASE
+        r"(?<!P)P(\d+)", re.IGNORECASE  # 'P' not preceded by P/p, followed by digits
     )
 
     p_participant_numbers = []
@@ -36,19 +34,24 @@ def get_p_and_pp_participant_number():
 
     return p_participant_numbers, pp_participant_numbers
 
+
 def get_participant_ids(p_participant_numbers, pp_participant_numbers):
     participant_ids = []
-    for prefix, participant_numbers in [("P", p_participant_numbers),("PP", pp_participant_numbers),]:
+    for prefix, participant_numbers in [
+        ("P", p_participant_numbers),
+        ("PP", pp_participant_numbers),
+    ]:
         for participant_number in participant_numbers:
             participant_id = f"{prefix}{participant_number}"
             participant_ids.append(participant_id)
     return participant_ids
 
+
 def execute_notebook(participant_id):
     print(participant_id)
     pm.execute_notebook(
-        "/Users/bassel27/personal_projects/facial_expressions_detection/main.ipynb",
-        "/Users/bassel27/personal_projects/facial_expressions_detection/lol.ipynb",
+        "/Users/bassel27/personal_projects/hireverse/main.ipynb",
+        "/Users/bassel27/personal_projects/hireverse/lol.ipynb",
         parameters=dict(participant_id=participant_id),
         progress_bar=False,
     )
@@ -62,4 +65,3 @@ with concurrent.futures.ThreadPoolExecutor() as executor:
     results = executor.map(execute_notebook, participant_ids)
     for result in results:
         print(result)
-    
