@@ -50,7 +50,7 @@ def get_participant_ids(p_participant_numbers, pp_participant_numbers):
 def execute_notebook(participant_id):
     print(participant_id)
     pm.execute_notebook(
-        "/Users/bassel27/personal_projects/hireverse/main.ipynb",
+        "/Users/bassel27/personal_projects/hireverse/feature_extractor.ipynb",
         "/Users/bassel27/personal_projects/hireverse/lol.ipynb",
         parameters=dict(participant_id=participant_id),
         progress_bar=False,
