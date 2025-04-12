@@ -3,13 +3,12 @@ import numpy as np
 from pydub import AudioSegment
 import assemblyai as aai
 from models.model_features import LexicalFeatures
-from LIWC import *
 import re
 import csv
 from collections import Counter
 import spacy
 import string
-
+from utils.LIWC import *
 # Define filler words and sentence start words
 filler_words = {"uhm", "um", "uh"}  # Count these anywhere
 sentence_start_words = {"basically", "like"}  # Only count these at sentence starts
@@ -71,7 +70,7 @@ class lexicalanalyser:
         doc = nlp(self.transcript)
         liwc_features = {
             "Individual": sum(1 for word in words if word in Individual_Words),
-            "Group": sum(1 for word in words if word in Group_Words),
+            "We": sum(1 for word in words if word in Group_Words),
             "They": sum(1 for word in words if word in They_Words),
             "Non_Fluences": self.filler_count,
             "PosEmotion": sum(1 for word in words if word in PosEmotion),
@@ -105,5 +104,4 @@ class lexicalanalyser:
         features = {}
         features.update(self._extract_lexical_features())
         features.update(self._extract_LIWC_features())
-        features = {k.capitalize(): v for k, v in features.items()}
         return LexicalFeatures(**features)
