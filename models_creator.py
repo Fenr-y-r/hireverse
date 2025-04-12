@@ -11,7 +11,7 @@ def execute_notebook(label, drop_some_facial_features=False):
     output_file_path = os.path.join(
         current_dir, "runners", "outputs", f"{label}_runner_output.ipynb"
     )
-    model_dir = os.path.join(current_dir, "hirability_model.ipynb")
+    model_dir = os.path.join(current_dir, "model_creator.ipynb")
     pm.execute_notebook(  # TODO: use relative path here and other runner
         model_dir,
         output_file_path,
