@@ -4,16 +4,18 @@ import re
 import nbformat
 import pandas as pd
 import papermill as pm
+from pathlib import Path
 
-
+proj_dir=Path(__file__).resolve().parent.parent.parent
 def execute_notebook(label, drop_some_facial_features=False):
-    current_dir = os.path.dirname(__file__)
+    current_dir = Path(__file__).resolve().parent.parent
+    input_file_path = os.path.join(current_dir, "pipelines" , "model_creator.ipynb")
     output_file_path = os.path.join(
-        current_dir, "runners", "outputs", f"{label}_runner_output.ipynb"
+        proj_dir, "outputs", f"{label}_runner_output.ipynb"
     )
     model_dir = os.path.join(current_dir, "model_creator.ipynb")
     pm.execute_notebook(  # TODO: use relative path here and other runner
-        model_dir,
+        input_file_path,
         output_file_path,
         parameters=dict(target_column=label),
         progress_bar=False,
@@ -85,8 +87,9 @@ def get_scores(label):
     }
 
 
-script_dir = os.path.dirname(__file__)
-file_path = os.path.join(script_dir, "datasets", "turker_scores_full_interview.csv")
+script_dir=Path(__file__).resolve().parent.parent.parent
+print(script_dir)
+file_path = os.path.join(script_dir, "data", "external","turker_scores_full_interview.csv")
 df = pd.read_csv(file_path)
 labels = df.columns[3:].tolist()
 list = []

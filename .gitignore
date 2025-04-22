@@ -1,11 +1,15 @@
 datasets/
 MIT/
+venv/
 myenv/
+nltk_data/
 __pycache__/
 .DS_Store
 models/emotion-detection.ipynb
 archive (3)/
 .vscode/
 papers/
-lol.ipynb
+videos/
+audio/
+interview_features.csv
 outputs/

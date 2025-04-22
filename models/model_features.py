@@ -111,7 +111,28 @@ class FacialFeatures:
     pitch_median: float
     yaw_median: float
     roll_median: float
-    
+
+    def __str__(self):
+        return (
+            f"FacialFeatures("
+            f"average_outer_brow_height_mean={self.average_outer_brow_height_mean}, average_inner_brow_height_mean={self.average_inner_brow_height_mean}, "
+            f"eye_open_mean={self.eye_open_mean}, outer_lip_height_mean={self.outer_lip_height_mean}, inner_lip_height_mean={self.inner_lip_height_mean}, "
+            f"lip_corner_distance_mean={self.lip_corner_distance_mean}, smile_mean={self.smile_mean}, pitch_mean={self.pitch_mean}, yaw_mean={self.yaw_mean}, roll_mean={self.roll_mean}, "
+            f"average_outer_brow_height_std={self.average_outer_brow_height_std}, average_inner_brow_height_std={self.average_inner_brow_height_std}, "
+            f"eye_open_std={self.eye_open_std}, outer_lip_height_std={self.outer_lip_height_std}, inner_lip_height_std={self.inner_lip_height_std}, "
+            f"lip_corner_distance_std={self.lip_corner_distance_std}, smile_std={self.smile_std}, pitch_std={self.pitch_std}, yaw_std={self.yaw_std}, roll_std={self.roll_std}, "
+            f"average_outer_brow_height_min={self.average_outer_brow_height_min}, average_inner_brow_height_min={self.average_inner_brow_height_min}, "
+            f"eye_open_min={self.eye_open_min}, outer_lip_height_min={self.outer_lip_height_min}, inner_lip_height_min={self.inner_lip_height_min}, "
+            f"lip_corner_distance_min={self.lip_corner_distance_min}, smile_min={self.smile_min}, pitch_min={self.pitch_min}, yaw_min={self.yaw_min}, roll_min={self.roll_min}, "
+            f"average_outer_brow_height_max={self.average_outer_brow_height_max}, average_inner_brow_height_max={self.average_inner_brow_height_max}, "
+            f"eye_open_max={self.eye_open_max}, outer_lip_height_max={self.outer_lip_height_max}, inner_lip_height_max={self.inner_lip_height_max}, "
+            f"lip_corner_distance_max={self.lip_corner_distance_max}, smile_max={self.smile_max}, pitch_max={self.pitch_max}, yaw_max={self.yaw_max}, roll_max={self.roll_max}, "
+            f"average_outer_brow_height_median={self.average_outer_brow_height_median}, average_inner_brow_height_median={self.average_inner_brow_height_median}, "
+            f"eye_open_median={self.eye_open_median}, outer_lip_height_median={self.outer_lip_height_median}, inner_lip_height_median={self.inner_lip_height_median}, "
+            f"lip_corner_distance_median={self.lip_corner_distance_median}, smile_median={self.smile_median}, pitch_median={self.pitch_median}, yaw_median={self.yaw_median}, roll_median={self.roll_median})"
+        )
+
+
 @dataclass
 class LexicalFeatures:
     # Word counts
@@ -149,7 +170,7 @@ class LexicalFeatures:
     Quantifiers:int
     Numbers:int
 
-    def _str_(self):
+    def __str__(self):
         return (
             f"LexicalFeatures("
             f"Total_words={self.Total_words}, Unique_words={self.Unique_words}, Filler_words={self.Filler_words}, "

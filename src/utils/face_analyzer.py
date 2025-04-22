@@ -13,8 +13,22 @@ import random
 from deepface import DeepFace
 import pandas as pd
 
-from models.frame import Frame
+
+import sys
+from pathlib import Path
+
+# Get to project root (two levels up from this file)
+project_root = os.path.join(Path(__file__).resolve().parents[2])
+print(f"Project root: {project_root}")
+# Add to sys.path if it's not already there
+if str(project_root) not in sys.path:
+    sys.path.append(str(project_root))
+
+# Now you can import frame
+# or from frame import FrameClass
+from models.frame import Frame as fa
 from models.selected_facial_landmarks import TwoLandmarksConnector
+
 
 
 class FaceAnalyzer:
@@ -294,7 +308,7 @@ class FaceAnalyzer:
 
         return tuple(result)
 
-    def get_one_frame_per_video(self) -> List[Frame]:
+    def get_one_frame_per_video(self) -> List[fa]:
         frames = []
         files = sorted(os.listdir(FaceAnalyzer.VIDEOS_FOLDER_PATH))
         files.sort(key=lambda f: int(re.search(r"\d+", f).group()))
@@ -313,7 +327,7 @@ class FaceAnalyzer:
                 cap.release()
                 participant_number = re.search(r"\d+", f).group()
                 frames.append(
-                    Frame(
+                    fa(
                         participant_number,
                         participant_number,
                         frame_image,
@@ -334,7 +348,7 @@ class FaceAnalyzer:
         video_folder_path: str,
         num_selected_frames: int = None,
         is_consecutive_frames=False,
-    ) -> List[Frame]:
+    ) -> List[fa]:
         
         video_path = self.get_folder_path(participant_id, video_folder_path)
         return self._get_video_frames(
@@ -346,7 +360,7 @@ class FaceAnalyzer:
 
     def get_video_frames(
         self, video_path, num_selected_frames: int = None, is_consecutive=False
-    ) -> List[Frame]:
+    ) -> List[fa]:
         return self._get_video_frames(
             video_path,
             num_selected_frames=num_selected_frames,
@@ -359,8 +373,8 @@ class FaceAnalyzer:
         participant_id=None,
         num_selected_frames: int = None,
         is_consecutive_frames=False,
-    ) -> List[Frame]:
-        frames: List[Frame] = []
+    ) -> List[fa]:
+        frames: List[fa] = []
         cap = cv2.VideoCapture(video_path)
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         indices = range(frame_count)
@@ -373,7 +387,7 @@ class FaceAnalyzer:
             cap.set(cv2.CAP_PROP_POS_FRAMES, index)
             ret, frame_image = cap.read()
             frames.append(
-                Frame(
+                fa(
                     index,
                     participant_id if participant_id is not None else 0,
                     frame_image,

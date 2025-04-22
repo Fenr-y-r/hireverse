@@ -4,11 +4,11 @@ import cv2
 import mediapipe as mp
 from typing import List, Tuple
 import numpy as np
-import utils.face_analyzer as fa
-from utils.utils import denormalize_landmarks_without_Z
 from models.selected_facial_landmarks import (
     TwoLandmarksConnector,
 )
+import os
+from src.utils.utils import denormalize_landmarks_without_Z
 
 
 class Frame:
@@ -132,6 +132,7 @@ class Frame:
         )
 
     def display(self):
+        import src.utils.face_analyzer as fa
         fa.FaceAnalyzer().display_image(
             self.copied_image_for_drawing,
             (

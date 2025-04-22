@@ -2,10 +2,14 @@ from dataclasses import asdict
 import numpy as np
 import pandas as pd
 import os
+import sys
 
+# Add project root to sys.path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+if project_root not in sys.path:
+    sys.path.append(project_root)
 from models.frame import Frame
 from models.model_features import *
-
 
 class FeatureStorage:
 

@@ -2,13 +2,28 @@ import concurrent
 import papermill as pm
 import re
 import os
-
-import os
-import re
-
-
+from pathlib import Path
 def get_p_and_pp_participant_number():
-    VIDEOS_FOLDER = "./MIT/Videos/"
+
+
+# Get the current script location (feature_extractor.py)
+    current_file = Path(__file__).resolve()
+
+# Go up to project root: HIREVERSE/
+    project_root = current_file.parents[2]
+
+# Build full path to the video file
+    video_path = project_root / "data" / "raw" / "videos"
+
+    print("Video path:", video_path)
+
+# You can check if it exists
+    if video_path.exists():
+        print("Video file found!")
+        VIDEOS_FOLDER = video_path
+    else:
+        print("Video file not found.")
+
     pp_pattern = re.compile(
         r"^PP(\d+)", re.IGNORECASE  # 'PP' at start, followed by digits
     )
@@ -50,17 +65,16 @@ def get_participant_ids(p_participant_numbers, pp_participant_numbers):
 def execute_notebook(participant_id):
     print(participant_id)
     pm.execute_notebook(
-        "/Users/bassel27/personal_projects/hireverse/feature_extractor.ipynb",
-        "/Users/bassel27/personal_projects/hireverse/lol.ipynb",
+        input_path=Path(__file__).resolve().parent.parent / "pipelines"/ "feature_extractor.ipynb",
+        output_path=Path(__file__).resolve().parent.parent.parent / "outputs"/ "feature_extractor_output.ipynb",
         parameters=dict(participant_id=participant_id),
         progress_bar=False,
     )
 
 
 p_participant_numbers, pp_participant_numbers = get_p_and_pp_participant_number()
-
+execute_notebook("P1")
 participant_ids = get_participant_ids(p_participant_numbers, pp_participant_numbers)
-participant_ids.remove("P13")
 with concurrent.futures.ThreadPoolExecutor() as executor:
     results = executor.map(execute_notebook, participant_ids)
     for result in results:
