@@ -67,8 +67,14 @@ def execute_notebook(participant_id):
     pm.execute_notebook(
         input_path=Path(__file__).resolve().parent.parent / "pipelines"/ "feature_extractor.ipynb",
         output_path=Path(__file__).resolve().parent.parent.parent / "outputs"/ "feature_extractor_output.ipynb",
-        parameters=dict(participant_id=participant_id),
-        progress_bar=False,
+        parameters=dict(
+        participant_id=participant_id,
+        analyzer_paths = str(Path("./src/utils").resolve()),
+        VidFile = str(Path("./data/raw/videos").resolve()),
+        AudFile = str(Path("./data/raw/audio").resolve()),
+        OutFile = str(Path("./data/processed/interview_features.csv").resolve())
+        ),
+        progress_bar=True
     )
 
 

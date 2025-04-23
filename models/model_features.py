@@ -162,13 +162,8 @@ class LexicalFeatures:
     Work:int
     Swear:int	
     Articles:int
-    Verbs:int	
-    Adverbs:int
-    Prepositions:int
-    Conjunctions:int
     Negations:int
     Quantifiers:int
-    Numbers:int
 
     def __str__(self):
         return (
@@ -178,6 +173,5 @@ class LexicalFeatures:
             f"Individual={self.Individual}, We={self.We}, They={self.They}, Non_Fluences={self.Non_Fluences}, PosEmotion={self.PosEmotion}, "
             f"NegEmotion={self.NegEmotion}, Anxiety={self.Anxiety}, Anger={self.Anger}, Sadness={self.Sadness}, Cognitive={self.Cognitive}, "
             f"Inhibition={self.Inhibition}, Preceptual={self.Preceptual}, Relativity={self.Relativity}, Work={self.Work}, Swear={self.Swear}, "
-            f"Articles={self.Articles}, Verbs={self.Verbs}, Adverbs={self.Adverbs}, Prepositions={self.Prepositions}, Conjunctions={self.Conjunctions}, "
-            f"Negations={self.Negations}, Quantifiers={self.Quantifiers}, Numbers={self.Numbers})"
+            f"Articles={self.Articles}, Negations={self.Negations}, Quantifiers={self.Quantifiers})"
         )

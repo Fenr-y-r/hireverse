@@ -13,9 +13,10 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
 if project_root not in sys.path:
     sys.path.append(project_root)
 from models.model_features import ProsodicFeatures
+from pathlib import Path
 
 class ProsodyAnalyzer:
-    AUDIO_FOLDER_PATH = "./data/raw/audio"
+    AUDIO_FOLDER_PATH = Path("../../data/raw/audio").resolve()
 
     def __init__(self, participant_id:str):
         self.audio_path = os.path.join(

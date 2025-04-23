@@ -5,7 +5,6 @@ import assemblyai as aai
 import re
 import csv
 from collections import Counter
-import nltk
 import string
 import sys
 import os
@@ -33,22 +32,6 @@ config = aai.TranscriptionConfig(
     speakers_expected=2
 )
 
-# Load SpaCy NLP model
-import nltk
-
-# Set nltk_data folder relative to project root
-nltk_data_path = Path(__file__).resolve().parents[2] / "nltk_data"
-
-# Ensure nltk uses this path
-nltk.data.path = [str(nltk_data_path)]
-
-# Automatically download if needed
-try:
-    nltk.data.find('tokenizers/punkt')
-    nltk.data.find('taggers/averaged_perceptron_tagger')
-except LookupError:
-    nltk.download('punkt', download_dir=str(nltk_data_path))
-    nltk.download('averaged_perceptron_tagger', download_dir=str(nltk_data_path))
 
 class lexicalanalyser:
     def __init__(self, audio_path: str):
@@ -94,8 +77,6 @@ class lexicalanalyser:
         Extract LIWC features from the audio file.
         """
         words = self.words
-        tokens = nltk.word_tokenize(self.transcript)
-        pos_tags = nltk.pos_tag(tokens)
         liwc_features = {
             "Individual": sum(1 for word in words if word in Individual_Words),
             "We": sum(1 for word in words if word in Group_Words),
@@ -113,13 +94,6 @@ class lexicalanalyser:
             "Work": sum(1 for word in words if word in Work),
             "Swear": sum(1 for word in words if word in Swear),
             "Articles": sum(1 for word in words if word in Articles),
-            "Verbs": sum(1 for word, tag in pos_tags if tag.startswith("VB")),
-            "Adverbs": sum(1 for word, tag in pos_tags if tag.startswith("RB")),
-            "Prepositions": sum(1 for word, tag in pos_tags if tag == "IN"),
-            "Conjunctions": sum(1 for word, tag in pos_tags if tag in ["CC", "IN"]),
-            "Numbers": sum(1 for word, tag in pos_tags if tag == "CD")
-                    + sum(1 for word in tokens if re.match(r'\b\d+(st|nd|rd|th)\b', word))
-                    + sum(1 for word in tokens if "%" in word),
             "Negations": sum(1 for word in words if word in Negations),
             "Quantifiers": sum(1 for word in words if word in Quantifiers),          
         }

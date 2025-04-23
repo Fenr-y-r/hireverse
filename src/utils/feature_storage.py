@@ -20,7 +20,8 @@ class FeatureStorage:
     def save_to_csv(self, participant_id: str, *features):
         data = {"participant_id": participant_id}
         for feature in features:  # Iterate over tuple elements directly
-            data.update(asdict(feature)) 
+            data.update(asdict(feature))
+            print(f"Feature attributes: {asdict(feature)}")  # Print attributes of each feature
 
         df = pd.DataFrame([data])
 
