@@ -9,10 +9,7 @@ from parselmouth.praat import (
 from pydub import AudioSegment
 import sys
 import webrtcvad # Python library for Voice Activity Detection (VAD) # used to detect speech vs. non-speech segments in an audio signal.
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-if project_root not in sys.path:
-    sys.path.append(project_root)
-from models.model_features import ProsodicFeatures
+from schemas.model_features import ProsodicFeatures
 from pathlib import Path
 
 class ProsodyAnalyzer:

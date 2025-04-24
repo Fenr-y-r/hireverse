@@ -10,18 +10,9 @@ import sys
 import os
 import sys
 from pathlib import Path
-
-# Go up 2 levels from utils/ to get to project root
-project_root = Path(__file__).resolve().parents[2]
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
+from src.schemas.model_features import LexicalFeatures
 from src.utils.LIWC import *
-# Get the path to the project root
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-if project_root not in sys.path:
-    sys.path.append(project_root)
-from models.model_features import LexicalFeatures
-# Define filler words and sentence start words
+
 filler_words = {"uhm", "um", "uh"}  # Count these anywhere
 sentence_start_words = {"basically", "like"}  # Only count these at sentence starts
 aai.settings.api_key = "52e3e90185574153903f7fb2fb3bb81e"

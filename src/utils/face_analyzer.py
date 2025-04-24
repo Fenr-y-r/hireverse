@@ -12,22 +12,10 @@ import cv2
 import random
 from deepface import DeepFace
 import pandas as pd
-
-
 import sys
 from pathlib import Path
-
-# Get to project root (two levels up from this file)
-project_root = os.path.join(Path(__file__).resolve().parents[2])
-print(f"Project root: {project_root}")
-# Add to sys.path if it's not already there
-if str(project_root) not in sys.path:
-    sys.path.append(str(project_root))
-
-# Now you can import frame
-# or from frame import FrameClass
-from models.frame import Frame as fa
-from models.selected_facial_landmarks import TwoLandmarksConnector
+from schemas.frame import Frame as fa
+from schemas.selected_facial_landmarks import TwoLandmarksConnector
 
 
 

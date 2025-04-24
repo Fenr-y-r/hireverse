@@ -4,7 +4,7 @@ import cv2
 import mediapipe as mp
 from typing import List, Tuple
 import numpy as np
-from models.selected_facial_landmarks import (
+from schemas.selected_facial_landmarks import (
     TwoLandmarksConnector,
 )
 import os
