@@ -4,8 +4,8 @@ import pandas as pd
 import os
 import sys
 
-from src.schemas.model_features import *
-from src.schemas.frame import Frame
+from schemas.model_features import *
+from schemas.frame import Frame
 
 
 

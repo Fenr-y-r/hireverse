@@ -8,7 +8,7 @@ from schemas.selected_facial_landmarks import (
     TwoLandmarksConnector,
 )
 import os
-from src.utils.utils import denormalize_landmarks_without_Z
+from utils.utils import denormalize_landmarks_without_Z
 
 
 class Frame:
