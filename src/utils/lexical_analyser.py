@@ -41,6 +41,7 @@ class lexicalanalyser:
         self.audio_path = audio_path
         self.audio = AudioSegment.from_file(self.audio_path)
         self.duration = self.audio.duration_seconds
+        
     def _extract_lexical_features(self):
         """
         Extract lexical features from the audio file.
