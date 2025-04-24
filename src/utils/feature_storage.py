@@ -24,7 +24,6 @@ class FeatureStorage:
         data = {"participant_id": participant_id}
         for feature in features:  # Iterate over tuple elements directly
             data.update(asdict(feature))
-            print(f"Feature attributes: {asdict(feature)}")  # Print attributes of each feature
 
         df = pd.DataFrame([data])
 
