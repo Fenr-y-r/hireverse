@@ -9,7 +9,5 @@ models/emotion-detection.ipynb
 archive (3)/
 .vscode/
 papers/
-videos/
-audio/
 interview_features.csv
 outputs/

@@ -33,7 +33,7 @@ config = aai.TranscriptionConfig(
 )
 
 
-class lexicalanalyser:
+class LexicalAnalyser:
     def __init__(self, audio_path: str):
         """
         Initialize the lexicalanalyser with a custom audio file path.
