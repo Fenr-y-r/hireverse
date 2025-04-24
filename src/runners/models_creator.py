@@ -5,39 +5,35 @@ import nbformat
 import pandas as pd
 import papermill as pm
 from pathlib import Path
-
-proj_dir=Path(__file__).resolve().parent.parent.parent
-def execute_notebook(label, drop_some_facial_features=False):
-    current_dir = Path(__file__).resolve().parent.parent
-    input_file_path = os.path.join(current_dir, "pipelines" , "model_creator.ipynb")
-    output_file_path = os.path.join(
-        proj_dir, "outputs", f"{label}_runner_output.ipynb"
-    )
-    model_dir = os.path.join(current_dir, "model_creator.ipynb")
-    pm.execute_notebook(  # TODO: use relative path here and other runner
-        input_file_path,
-        output_file_path,
-        parameters=dict(target_column=label),
-        progress_bar=False,
-    )
-    return get_scores(label)
-
-
 import os
 import nbformat
 import re
 from bs4 import BeautifulSoup
 
+from utils.utils import BASE_DIR
 
-def get_scores(label):
-    current_dir = os.path.dirname(__file__)
-    notebook_path = os.path.join(
-        current_dir, "runners", "outputs", f"{label}_runner_output.ipynb"
+def get_output_notebook_path(label):
+    return  os.path.join(
+        proj_dir, "outputs", f"{label}_runner_output.ipynb"
     )
 
-    if not os.path.exists(notebook_path):
-        return {"label": label, "avg_r2_score": None, "avg_pearson_score": None}
+proj_dir=Path(__file__).resolve().parent.parent.parent
+def execute_notebook(label, drop_some_facial_features=False):
+    current_dir = Path(__file__).resolve().parent.parent
+    input_notebook_path = os.path.join(current_dir, "pipelines" , "model_creator.ipynb")
+    ouput_path =get_output_notebook_path(label)
+    model_dir = os.path.join(current_dir, "model_creator.ipynb")
+    pm.execute_notebook(  # TODO: use relative path here and other runner
+        input_notebook_path,
+        ouput_path,
+        parameters=dict(target_column=label),
+        progress_bar=False,
+    )
+    return get_scores_from__output_jupyter(label)
 
+def get_scores_from__output_jupyter(label):
+    current_dir = os.path.dirname(__file__)
+    notebook_path =get_output_notebook_path(label)
     with open(notebook_path, "r") as notebook_file:
         notebook_content = nbformat.read(notebook_file, as_version=4)
 
@@ -87,9 +83,8 @@ def get_scores(label):
     }
 
 
-script_dir=Path(__file__).resolve().parent.parent.parent
-print(script_dir)
-file_path = os.path.join(script_dir, "data", "external","turker_scores_full_interview.csv")
+
+file_path = os.path.join(BASE_DIR, "data", "external","turker_scores_full_interview.csv")
 df = pd.read_csv(file_path)
 labels = df.columns[3:].tolist()
 list = []

@@ -9,7 +9,6 @@ def get_p_and_pp_participant_number():
     current_folder = Path(__file__).resolve()
     project_root = current_folder.parents[2]
     VIDEOS_FOLDER = project_root / "data" / "raw" / "videos"
-        
 
     pp_pattern = re.compile(
         r"^PP(\d+)", re.IGNORECASE  # 'PP' at start, followed by digits

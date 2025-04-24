@@ -8,15 +8,16 @@ from parselmouth.praat import (
 )  # Praat is a gold standard for speech analysis, and parselmouth brings its capabilities to Python
 from pydub import AudioSegment
 import sys
-from utils.utils import MAIN_DIR
-import webrtcvad # Python library for Voice Activity Detection (VAD) # used to detect speech vs. non-speech segments in an audio signal.
+from utils.utils import BASE_DIR
+import webrtcvad  # Python library for Voice Activity Detection (VAD) # used to detect speech vs. non-speech segments in an audio signal.
 from schemas.model_features import ProsodicFeatures
 from pathlib import Path
 
-class ProsodyAnalyzer:
-    AUDIO_FOLDER_PATH = AUDIO_FILE_PATH = MAIN_DIR + f"/data/raw/audio"
 
-    def __init__(self, participant_id:str):
+class ProsodyAnalyzer:
+    AUDIO_FOLDER_PATH = AUDIO_FILE_PATH = BASE_DIR + f"/data/raw/audio"
+
+    def __init__(self, participant_id: str):
         self.audio_path = os.path.join(
             self.AUDIO_FOLDER_PATH, f"trimmed_{participant_id}.wav"
         )
@@ -31,18 +32,18 @@ class ProsodyAnalyzer:
 
     def _extract_pitch_features(self):
         pitch = self.sound.to_pitch()
-        f0 = pitch.selected_array['frequency']
+        f0 = pitch.selected_array["frequency"]
         f0 = f0[f0 > 0]  # Remove unvoiced frames
 
         if len(f0) == 0:
-            return {k:0 for k in ["F0_MEAN", "F0_MIN", "F0_MAX", "F0_RANGE", "F0_SD"]}
+            return {k: 0 for k in ["F0_MEAN", "F0_MIN", "F0_MAX", "F0_RANGE", "F0_SD"]}
 
         return {
-        "F0_MEAN": np.mean(f0),
-        "F0_MIN": np.min(f0),
-        "F0_MAX": np.max(f0),
-        "F0_RANGE": np.ptp(f0),
-        "F0_SD": np.std(f0),
+            "F0_MEAN": np.mean(f0),
+            "F0_MIN": np.min(f0),
+            "F0_MAX": np.max(f0),
+            "F0_RANGE": np.ptp(f0),
+            "F0_SD": np.std(f0),
         }
 
     def _extract_intensity_features(self):
@@ -110,7 +111,7 @@ class ProsodyAnalyzer:
             "F3_SD": np.std(
                 f3
             ),  # High F3_SD = Large changes in lip/pharynx shape (e.g., varied articulation). # Low F3_SD = Stable lip/pharynx shape (e.g., consistent articulation).
-            "F2_F1_MEAN": np.mean(f2_f1_ratio), # f2/f1_mean
+            "F2_F1_MEAN": np.mean(f2_f1_ratio),  # f2/f1_mean
             "F3_F1_MEAN": np.mean(f3_f1_ratio),
             "F2_F1_SD": np.std(f2_f1_ratio),
             "F3_F1_SD": np.std(f3_f1_ratio),
@@ -154,7 +155,7 @@ class ProsodyAnalyzer:
         silence_audio = AudioSegment.silent(
             duration=0, frame_rate=16000
         )  # Empty silent track
-        total_speech_segments=0
+        total_speech_segments = 0
         for i, frame in enumerate(frames):
             frame_bytes = frame.astype(np.int16).tobytes()  # Convert to PCM 16-bit
             if len(frame_bytes) == frame_size * 2:  # Ensure correct frame size
@@ -165,7 +166,7 @@ class ProsodyAnalyzer:
                         frame_bytes, sample_width=2, frame_rate=16000, channels=1
                     )
                 else:
-                    total_speech_segments+=1
+                    total_speech_segments += 1
                     if current_pause > 0:
                         pauses.append(current_pause)
                         current_pause = 0
@@ -175,7 +176,8 @@ class ProsodyAnalyzer:
 
         return {
             "percent_Unvoiced": percent_unvoiced,
-            "percent_Breaks": (len(pauses) / (total_speech_segments + 1e-10)) * 100,    # how frequently someone stops speaking (breaks in fluency).
+            "percent_Breaks": (len(pauses) / (total_speech_segments + 1e-10))
+            * 100,  # how frequently someone stops speaking (breaks in fluency).
             "max_Pause_Duration": max(pauses) if pauses else 0,
             "avg_Pause_Duration": np.mean(pauses) if pauses else 0,
         }
@@ -199,5 +201,5 @@ class ProsodyAnalyzer:
         features.update(self.extract_perturbation_features())
         features.update(self._extract_pause_features())
         features["Duration"] = self.duration
-        features = { k.lower():v for k,v in features.items()}
+        features = {k.lower(): v for k, v in features.items()}
         return ProsodicFeatures(**features)
