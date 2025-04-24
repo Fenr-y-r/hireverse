@@ -4,25 +4,11 @@ import re
 import os
 from pathlib import Path
 def get_p_and_pp_participant_number():
-
-
-# Get the current script location (feature_extractor.py)
     current_file = Path(__file__).resolve()
-
 # Go up to project root: HIREVERSE/
     project_root = current_file.parents[2]
-
-# Build full path to the video file
-    video_path = project_root / "data" / "raw" / "videos"
-
-    print("Video path:", video_path)
-
-# You can check if it exists
-    if video_path.exists():
-        print("Video file found!")
-        VIDEOS_FOLDER = video_path
-    else:
-        print("Video file not found.")
+    VIDEOS_FOLDER = project_root / "data" / "raw" / "videos"
+        
 
     pp_pattern = re.compile(
         r"^PP(\d+)", re.IGNORECASE  # 'PP' at start, followed by digits
@@ -37,11 +23,12 @@ def get_p_and_pp_participant_number():
 
     # Loop over all files in the folder
     for filename in sorted(os.listdir(VIDEOS_FOLDER)):
-        if pp_match := pp_pattern.search(filename):
-            pp_participant_numbers.append(int(pp_match.group(1)))
-        else:
-            p_match = p_pattern.search(filename)
-            p_participant_numbers.append(int(p_match.group(1)))
+        if(any(filename.endswith(ext) for ext in [".mp4", ".avi", ".mov"])):
+            if pp_match := pp_pattern.search(filename):
+                pp_participant_numbers.append(int(pp_match.group(1)))
+            else:
+                p_match = p_pattern.search(filename)
+                p_participant_numbers.append(int(p_match.group(1)))
 
     # Sort the participant numbers
     p_participant_numbers.sort()
@@ -69,19 +56,15 @@ def execute_notebook(participant_id):
         output_path=Path(__file__).resolve().parent.parent.parent / "outputs"/ "feature_extractor_output.ipynb",
         parameters=dict(
         participant_id=participant_id,
-        analyzer_paths = str(Path("./src/utils").resolve()),
-        VidFile = str(Path("./data/raw/videos").resolve()),
-        AudFile = str(Path("./data/raw/audio").resolve()),
-        OutFile = str(Path("./data/processed/interview_features.csv").resolve())
         ),
         progress_bar=True
     )
 
 
+
 p_participant_numbers, pp_participant_numbers = get_p_and_pp_participant_number()
-execute_notebook("P1")
+
 participant_ids = get_participant_ids(p_participant_numbers, pp_participant_numbers)
+participant_ids.remove("P13")
 with concurrent.futures.ThreadPoolExecutor() as executor:
     results = executor.map(execute_notebook, participant_ids)
-    for result in results:
-        print(result)

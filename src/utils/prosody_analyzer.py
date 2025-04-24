@@ -8,12 +8,13 @@ from parselmouth.praat import (
 )  # Praat is a gold standard for speech analysis, and parselmouth brings its capabilities to Python
 from pydub import AudioSegment
 import sys
+from utils.utils import MAIN_DIR
 import webrtcvad # Python library for Voice Activity Detection (VAD) # used to detect speech vs. non-speech segments in an audio signal.
 from schemas.model_features import ProsodicFeatures
 from pathlib import Path
 
 class ProsodyAnalyzer:
-    AUDIO_FOLDER_PATH = Path("../../data/raw/audio").resolve()
+    AUDIO_FOLDER_PATH = AUDIO_FILE_PATH = MAIN_DIR + f"/data/raw/audio"
 
     def __init__(self, participant_id:str):
         self.audio_path = os.path.join(

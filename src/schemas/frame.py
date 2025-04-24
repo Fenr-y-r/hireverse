@@ -132,7 +132,7 @@ class Frame:
         )
 
     def display(self):
-        import src.utils.face_analyzer as fa
+        import utils.face_analyzer as fa
         fa.FaceAnalyzer().display_image(
             self.copied_image_for_drawing,
             (

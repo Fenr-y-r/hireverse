@@ -10,8 +10,8 @@ import sys
 import os
 import sys
 from pathlib import Path
-from src.schemas.model_features import LexicalFeatures
-from src.utils.LIWC import *
+from schemas.model_features import LexicalFeatures
+from utils.LIWC import *
 
 filler_words = {"uhm", "um", "uh"}  # Count these anywhere
 sentence_start_words = {"basically", "like"}  # Only count these at sentence starts

@@ -2,6 +2,10 @@
 from typing import List, Tuple
 
 from mediapipe.framework.formats.landmark_pb2 import NormalizedLandmark
+import os
+
+
+MAIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
 
