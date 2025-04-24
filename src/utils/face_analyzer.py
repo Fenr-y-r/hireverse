@@ -151,7 +151,7 @@ class FaceAnalyzer:
     # TODO: make sure this works
     def get_largest_face_landmarks_obj(
         self, image, detected_faces_landmarks
-    ) -> list[NormalizedLandmark]:
+    ) :
         """
         This function takes the MediaPipe results and returns the largest face landmarks
         based on bounding box area.

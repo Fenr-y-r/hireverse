@@ -1,12 +1,13 @@
 import concurrent
-import papermill as pm
+import papermill as pm  
 import re
 import os
 from pathlib import Path
+
+
 def get_p_and_pp_participant_number():
-    current_file = Path(__file__).resolve()
-# Go up to project root: HIREVERSE/
-    project_root = current_file.parents[2]
+    current_folder = Path(__file__).resolve()
+    project_root = current_folder.parents[2]
     VIDEOS_FOLDER = project_root / "data" / "raw" / "videos"
         
 
