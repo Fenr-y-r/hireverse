@@ -67,4 +67,4 @@ p_participant_numbers, pp_participant_numbers = get_p_and_pp_participant_number(
 participant_ids = get_participant_ids(p_participant_numbers, pp_participant_numbers)
 participant_ids.remove("P13")
 with concurrent.futures.ThreadPoolExecutor() as executor:
-    results = executor.map(execute_notebook, participant_ids[:2])
+    results = executor.map(execute_notebook, participant_ids)
