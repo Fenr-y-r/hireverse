@@ -361,16 +361,18 @@ class FaceAnalyzer:
         participant_id=None,
         num_selected_frames: int = None,
         is_consecutive_frames=False,
+        target_fps = None,
     ) -> List[fa]:
         frames: List[fa] = []
         cap = cv2.VideoCapture(video_path)
-        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        indices = range(frame_count)
-        if num_selected_frames and not is_consecutive_frames:
-            indices = sorted(random.sample(range(frame_count), num_selected_frames))
-        elif num_selected_frames and is_consecutive_frames:
-            starting_frame = random.randint(0, frame_count)
-            indices = range(starting_frame, starting_frame + num_selected_frames)
+        
+        indices = self._get_corresponding_frame_indices(
+            cap,
+            target_fps=target_fps,
+            num_selected_frames=num_selected_frames,
+            is_consecutive_frames=is_consecutive_frames,
+        )
+
         for index in indices:
             cap.set(cv2.CAP_PROP_POS_FRAMES, index)
             ret, frame_image = cap.read()
@@ -383,6 +385,34 @@ class FaceAnalyzer:
             )
         cap.release()
         return frames
+
+    def _get_corresponding_frame_indices(
+        self,
+        cap,
+        target_fps=None,
+        num_selected_frames: int = None,
+        is_consecutive_frames=False,
+    ):
+        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        original_fps = cap.get(cv2.CAP_PROP_FPS)
+        indices = range(frame_count)
+
+        if target_fps:
+            step = max(1, int(round(original_fps / target_fps)))
+            indices = indices[::step]  # Downsample frames based on target FPS
+            frame_count = len(indices)  # Update frame count after downsampling
+
+        if num_selected_frames:
+            num_selected_frames = min(num_selected_frames, frame_count) #  Ensure we don't request more frames than available
+            if is_consecutive_frames:
+                max_start = frame_count - num_selected_frames
+                starting_frame = random.randint(0, max(max_start, 0))
+                indices = indices[starting_frame : starting_frame + num_selected_frames]    # Takes consecutive frames AFTER FPS downsampling
+
+            else:
+                indices = sorted(random.sample(range(frame_count), num_selected_frames))
+
+        return list(indices)
 
     def display_image(self, image, title=None):
         plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
