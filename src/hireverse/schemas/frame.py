@@ -2,6 +2,10 @@ import math
 import matplotlib.pyplot as plt
 import cv2
 import mediapipe as mp
+from mediapipe.framework.formats.landmark_pb2 import (
+    NormalizedLandmark,
+    NormalizedLandmarkList,
+)
 from typing import List, Tuple
 import numpy as np
 from hireverse.schemas.selected_facial_landmarks import (
@@ -27,7 +31,7 @@ class Frame:
         self.smile_area = None
         self.face: Tuple[int, int, int, int] = None
         self.smile: Tuple[int, int, int, int] = None
-        self.facial_landmarks = None
+        self.facial_landmarks: NormalizedLandmarkList = None
         self.copied_image_for_drawing = None
         self.two_landmarks_connectors: List[TwoLandmarksConnector]
         self.image = image
@@ -75,10 +79,11 @@ class Frame:
                     f"{angle_name}: {round(self.face_angles[i], 1)}", (20, 20 + i * 20)
                 )
 
-    def draw_circle_by_facial_landmark(self, landmark):
-        self.draw_cirle_by_coordinate(
-            denormalize_landmarks_without_Z(landmark, self.image)
-        )
+    def draw_circle_at_facial_landmark(self, *args: NormalizedLandmark):
+        for landmark in args:
+            self.draw_cirle_by_coordinate(
+                denormalize_landmarks_without_Z(landmark, self.image)
+            )
 
     def draw_selected_facial_landmarks(self, draw_lines=True):
         self._create_drawable_image_copy_if_not_exist()
@@ -99,8 +104,8 @@ class Frame:
                             ),
                             color=color,
                         )
-                        self.draw_circle_by_facial_landmark(producing_landmarks[i])
-                        self.draw_circle_by_facial_landmark(producing_landmarks[i + 1])
+                        self.draw_circle_at_facial_landmark(producing_landmarks[i])
+                        self.draw_circle_at_facial_landmark(producing_landmarks[i + 1])
 
     def reset_drawable_image(self):
         self.copied_image_for_drawing = self.image.copy()
@@ -141,3 +146,68 @@ class Frame:
                 else " Frame" + str(self.index)
             ),
         )
+
+    def resize_according_to_width(self, new_width: int):
+        height, width = self.image.shape[:2]
+        aspect_ratio = height / width
+        new_height = int(new_width * aspect_ratio)
+        self.image = cv2.resize(self.image, (new_width, new_height))
+
+    def rotate_image_with_mediapipe_landmarks(self):
+        """
+        Rotate an image so that the line between the 'forehead' and chin
+        is vertical, using a MediaPipe face_landmarks object and rotates the 
+        face landmarks accordnigly.
+        """
+        if not self.facial_landmarks:
+            return
+
+        img_h, img_w = self.image.shape[:2]
+
+        lm_forehead = self.facial_landmarks[10]  # ~glabella (top center of nose bridge)
+        lm_chin = self.facial_landmarks[152]  # tip of the chin
+
+        # 2. Convert their normalized [0..1] coords into actual pixel positions
+        x1, y1 = denormalize_landmarks_without_Z(lm_forehead, self.image)
+        x2, y2 = denormalize_landmarks_without_Z(lm_chin, self.image)
+        # 3. Compute the angle between this vector and the horizontal
+        dy = y2 - y1
+        dx = x2 - x1
+        # atan2 returns radians; convert to degrees for OpenCV
+        angle = 90 - math.degrees(math.atan2(dy, dx))
+        if abs(angle) < 5:  # Threshold for "already vertical"
+            return
+        # 4. Define the rotation center as the image center
+        center = (img_w // 2, img_h // 2)
+
+        # 5. Build the 2×3 affine rotation matrix (no scaling)
+        rotation_matrix = cv2.getRotationMatrix2D(center, angle, 1.0)
+
+        # 6. Rotate the entire image
+        self.image = cv2.warpAffine(self.image, rotation_matrix, (img_w, img_h))
+        self._rotate_landmarks(rotation_matrix)
+
+    def _rotate_landmarks(self,rotation_matrix):
+        for landmark in self.facial_landmarks:
+            # Convert normalized coordinates to image coordinates
+            x,y = denormalize_landmarks_without_Z(landmark, self.image)
+            img_h, img_w = self.image.shape[:2]
+            rotated_point = np.dot(rotation_matrix, np.array([x, y, 1]))
+            
+            landmark.x = rotated_point[0] / img_w
+            landmark.y = rotated_point[1] / img_h
+
+    def crop_frame(self, x1, y1, x2, y2):
+        """
+        Crop the image to the given coordinates (x1, y1, x2, y2) using OpenCV.
+        
+        Args:
+            x1, y1: The top-left corner.
+            x2, y2: The bottom-right corner.
+            
+        Returns:
+            Cropped image (NumPy array).
+        """
+        # Crop the image using slicing (rows: y1 to y2, columns: x1 to x2)
+        self.image = self.image[y1:y2, x1:x2]
+        
