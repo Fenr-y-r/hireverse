@@ -5,7 +5,7 @@ import cv2
 import mediapipe as mp
 from typing import List, Tuple
 import numpy as np
-from mediapipe.framework.formats.landmark_pb2 import NormalizedLandmark
+from mediapipe.framework.formats.landmark_pb2 import NormalizedLandmark, NormalizedLandmarkList
 import os
 import re
 import cv2
@@ -16,6 +16,8 @@ import sys
 from pathlib import Path
 from schemas.frame import Frame as fa
 from schemas.selected_facial_landmarks import TwoLandmarksConnector
+from typing import Optional
+
 
 
 
@@ -140,7 +142,7 @@ class FaceAnalyzer:
             round((max_y - min_y) * img_w),
         )
 
-    def process_image_results(self, image):
+    def process_image_results(self, image) -> Optional[List[NormalizedLandmarkList]]:
         image.flags.writeable = False
         results = FaceAnalyzer.face_mesh.process(
             cv2.cvtColor(image, cv2.COLOR_BGR2RGB)

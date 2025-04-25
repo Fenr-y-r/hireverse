@@ -9,6 +9,7 @@ from schemas.selected_facial_landmarks import (
 )
 import os
 from utils.utils import denormalize_landmarks_without_Z
+import utils.face_analyzer as fa
 
 
 class Frame:
@@ -132,7 +133,6 @@ class Frame:
         )
 
     def display(self):
-        import utils.face_analyzer as fa
         fa.FaceAnalyzer().display_image(
             self.copied_image_for_drawing,
             (
