@@ -4,7 +4,7 @@ from mediapipe.framework.formats.landmark_pb2 import NormalizedLandmark
 import os
 
 
-BASE_DIR = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")), "..")
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
 
 def denormalize_landmarks_without_Z(

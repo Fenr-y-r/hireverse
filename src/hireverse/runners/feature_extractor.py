@@ -1,4 +1,5 @@
 import concurrent
+from hireverse.utils.utils import BASE_DIR
 import papermill as pm  
 import re
 import os
@@ -6,9 +7,7 @@ from pathlib import Path
 
 
 def get_p_and_pp_participant_number():
-    current_folder = Path(__file__).resolve()
-    project_root = current_folder.parents[2]
-    VIDEOS_FOLDER = project_root / "data" / "raw" / "videos"
+    VIDEOS_FOLDER = os.path.join(BASE_DIR, "data", "raw", "videos")
 
     pp_pattern = re.compile(
         r"^PP(\d+)", re.IGNORECASE  # 'PP' at start, followed by digits
@@ -51,11 +50,14 @@ def get_participant_ids(p_participant_numbers, pp_participant_numbers):
 
 def execute_notebook(participant_id):
     print(participant_id)
+    input_path = os.path.join(BASE_DIR, "src","hireverse","pipelines", "feature_extractor.ipynb")
+    output_path =os.path.join(BASE_DIR,  "outputs", "feature_extractor_output.ipynb")
+
     pm.execute_notebook(
-        input_path=Path(__file__).resolve().parent.parent / "pipelines"/ "feature_extractor.ipynb",
-        output_path=Path(__file__).resolve().parent.parent.parent / "outputs"/ "feature_extractor_output.ipynb",
+        input_path=input_path,
+        output_path=output_path,
         parameters=dict(
-        participant_id=participant_id,
+            participant_id=participant_id,
         ),
         progress_bar=True
     )

@@ -21,8 +21,7 @@ class ProsodyAnalyzer:
         self.audio_path = os.path.join(
             self.AUDIO_FOLDER_PATH, f"trimmed_{participant_id}.wav"
         )
-        print("a7a")
-        print(self.audio_path)
+        
         self.audio_waveform, self.sr = librosa.load(
             self.audio_path, sr=16000, mono=True, res_type="kaiser_best"
         )  # audio waveform is a NumPy array, sr: The sample rate of the audio (e.g., 44100 Hz) # The array elements are the amplitude values at different points in time.

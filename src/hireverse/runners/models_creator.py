@@ -12,28 +12,27 @@ from bs4 import BeautifulSoup
 
 from hireverse.utils.utils import BASE_DIR
 
-def get_output_notebook_path(label):
-    return  os.path.join(
-        proj_dir, "outputs", f"{label}_runner_output.ipynb"
-    )
 
-proj_dir=Path(__file__).resolve().parent.parent.parent
+def get_output_notebook_path(label):
+    return os.path.join(BASE_DIR, "outputs", f"{label}_runner_output.ipynb")
+
+
 def execute_notebook(label, drop_some_facial_features=False):
-    current_dir = Path(__file__).resolve().parent.parent
-    input_notebook_path = os.path.join(current_dir, "pipelines" , "model_creator.ipynb")
-    ouput_path =get_output_notebook_path(label)
-    model_dir = os.path.join(current_dir, "model_creator.ipynb")
-    pm.execute_notebook(  # TODO: use relative path here and other runner
+    input_notebook_path = os.path.join(
+        BASE_DIR, "src", "hireverse", "pipelines", "model_creator.ipynb"
+    )
+    ouput_path = get_output_notebook_path(label)
+    pm.execute_notebook(
         input_notebook_path,
         ouput_path,
         parameters=dict(target_column=label),
-        progress_bar=False,
+        progress_bar=True,
     )
     return get_scores_from__output_jupyter(label)
 
+
 def get_scores_from__output_jupyter(label):
-    current_dir = os.path.dirname(__file__)
-    notebook_path =get_output_notebook_path(label)
+    notebook_path = get_output_notebook_path(label)
     with open(notebook_path, "r") as notebook_file:
         notebook_content = nbformat.read(notebook_file, as_version=4)
 
@@ -83,8 +82,9 @@ def get_scores_from__output_jupyter(label):
     }
 
 
-
-file_path = os.path.join(BASE_DIR, "data", "external","turker_scores_full_interview.csv")
+file_path = os.path.join(
+    BASE_DIR, "data", "external", "turker_scores_full_interview.csv"
+)
 df = pd.read_csv(file_path)
 labels = df.columns[3:].tolist()
 list = []
