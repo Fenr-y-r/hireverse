@@ -337,7 +337,8 @@ class FaceAnalyzer:
         participant_id: str,
         video_folder_path: str,
         num_selected_frames: int = None,
-        is_consecutive_frames=False,
+        is_consecutive_frames=True,
+        target_fps=None,
     ) -> List[fa]:
         
         video_path = self.get_folder_path(participant_id, video_folder_path)
@@ -346,24 +347,26 @@ class FaceAnalyzer:
             participant_id,
             num_selected_frames,
             is_consecutive_frames=is_consecutive_frames,
+            target_fps=target_fps,
         )
 
     def get_video_frames(
-        self, video_path, num_selected_frames: int = None, is_consecutive=False
+        self, video_path, num_selected_frames: int = None, is_consecutive=True, target_fps=None
     ) -> List[fa]:
         return self._get_video_frames(
             video_path,
             num_selected_frames=num_selected_frames,
             is_consecutive_frames=is_consecutive,
+            target_fps=target_fps,
         )
 
     def _get_video_frames(
         self,
         video_path,
-        participant_id=None,
-        num_selected_frames: int = None,
-        is_consecutive_frames=False,
-        target_fps = None,
+        participant_id,
+        num_selected_frames: int,
+        is_consecutive_frames,
+        target_fps,
     ) -> List[fa]:
         frames: List[fa] = []
         cap = cv2.VideoCapture(video_path)
@@ -391,9 +394,9 @@ class FaceAnalyzer:
     def _get_corresponding_frame_indices(
         self,
         cap,
-        target_fps=None,
-        num_selected_frames: int = None,
-        is_consecutive_frames=False,
+        target_fps,
+        num_selected_frames,
+        is_consecutive_frames,
     ):
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         original_fps = cap.get(cv2.CAP_PROP_FPS)

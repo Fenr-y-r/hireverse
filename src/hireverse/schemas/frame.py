@@ -154,42 +154,31 @@ class Frame:
         self.image = cv2.resize(self.image, (new_width, new_height))
 
     def rotate_image_with_mediapipe_landmarks(self):
-        """
-        Rotate an image so that the line between the 'forehead' and chin
-        is vertical, using a MediaPipe face_landmarks object and rotates the 
-        face landmarks accordnigly.
-        """
         if not self.facial_landmarks:
             return
 
-        img_h, img_w = self.image.shape[:2]
-
-        lm_forehead = self.facial_landmarks[10]  # ~glabella (top center of nose bridge)
-        lm_chin = self.facial_landmarks[152]  # tip of the chin
-
-        # 2. Convert their normalized [0..1] coords into actual pixel positions
+        lm_forehead = self.facial_landmarks[10]
+        lm_chin = self.facial_landmarks[152]
         x1, y1 = denormalize_landmarks_without_Z(lm_forehead, self.image)
         x2, y2 = denormalize_landmarks_without_Z(lm_chin, self.image)
-        # 3. Compute the angle between this vector and the horizontal
-        dy = y2 - y1
-        dx = x2 - x1
-        # atan2 returns radians; convert to degrees for OpenCV
-        angle = 90 - math.degrees(math.atan2(dy, dx))
-        if abs(angle) < 5:  # Threshold for "already vertical"
-            return
-        # 4. Define the rotation center as the image center
+        dx = x2 - x1 
+        dy = y2 - y1 
+
+        angle = -math.degrees(math.atan2(dx, dy)) 
+
+        img_h, img_w = self.image.shape[:2]
         center = (img_w // 2, img_h // 2)
-
-        # 5. Build the 2×3 affine rotation matrix (no scaling)
         rotation_matrix = cv2.getRotationMatrix2D(center, angle, 1.0)
-
-        # 6. Rotate the entire image
-        self.image = cv2.warpAffine(self.image, rotation_matrix, (img_w, img_h))
+        self.image = cv2.warpAffine(
+            self.image, 
+            rotation_matrix, 
+            (img_w, img_h), 
+            flags=cv2.INTER_LINEAR
+        )
         self._rotate_landmarks(rotation_matrix)
 
     def _rotate_landmarks(self,rotation_matrix):
         for landmark in self.facial_landmarks:
-            # Convert normalized coordinates to image coordinates
             x,y = denormalize_landmarks_without_Z(landmark, self.image)
             img_h, img_w = self.image.shape[:2]
             rotated_point = np.dot(rotation_matrix, np.array([x, y, 1]))
