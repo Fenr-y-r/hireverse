@@ -72,7 +72,7 @@ def get_processed_frames( vid_file_path: str):
 #             output_path,
 #             frames=frame_data,
 #             video_id=vid_name,
-#             num_frames=len(frames)
+#             num_frames=len(frames))
         
 #         return True
 #     except Exception as e:
@@ -97,12 +97,10 @@ def get_processed_frames( vid_file_path: str):
     
 #     print(f"Successfully processed {sum(results)}/{len(video_paths)} videos")
 
-# # Example Usage
 # if __name__ == "__main__":
-#     video_dir = "path/to/your/videos"
-#     output_dir = "processed_frames"
+#     video_dir = os.path.join(BASE_DIR, "data", "raw","videos")
+#     output_dir = os.path.join(BASE_DIR ,"outputs")
     
-#     video_paths = [os.path.join(video_dir, f) for f in os.listdir(video_dir) 
-#                   if f.endswith(('.mp4', '.avi', '.mov'))]
+#     video_paths = [os.path.join(video_dir, f, ".avi") for f in get_participant_ids()]
     
-#     process_all_videos(video_paths[:139], output_dir)  # Process first 139 videos
+#     process_all_videos(video_paths, output_dir) 
