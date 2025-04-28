@@ -3,7 +3,7 @@ import time
 import matplotlib.pyplot as plt
 import cv2
 import mediapipe as mp
-from typing import List, Tuple
+from typing import List, Set, Tuple
 import numpy as np
 from mediapipe.framework.formats.landmark_pb2 import (
     NormalizedLandmark,
@@ -328,7 +328,8 @@ class FaceAnalyzer:
 
     def get_folder_path(self, participant_id, video_folder_path: str):
         return os.path.join(video_folder_path, f"{participant_id}.avi")
-
+    
+    
     def get_video_frames_for_participant(
         self,
         participant_id: str,
@@ -374,62 +375,45 @@ class FaceAnalyzer:
             is_random=is_consecutive,
             target_fps=target_fps,
         )
-
+    
+    #TODO: num_selected_frames and is_random are not implrmeneted yet
     def _get_video_frames(
         self,
-        video_path,
-        participant_id,
-        num_selected_frames: int,
-        is_random,
-        target_fps,
+        video_path: str,
+        participant_id: int,
+        num_selected_frames: Optional[int],
+        is_random: bool,
+        target_fps: Optional[int],
     ) -> List[fa]:
-        frames: List[fa] = []
         cap = cv2.VideoCapture(video_path)
+        original_fps = cap.get(cv2.CAP_PROP_FPS)
+        frames = []
 
-        indices = self._get_corresponding_frame_indices(
-            cap,
-            target_fps=target_fps,
-            num_selected_frames=num_selected_frames,
-            is_random=is_random,
-        )
-
-        for index in indices:
-            cap.set(cv2.CAP_PROP_POS_FRAMES, index)
+        for i in range(0, int(cap.get(cv2.CAP_PROP_FRAME_COUNT))):
             ret, frame_image = cap.read()
-            frames.append(
-                fa(
-                    index,
-                    participant_id if participant_id is not None else 0,
-                    frame_image,
+            if ret:
+                frames.append(
+                    fa(
+                        i,
+                        participant_id if participant_id is not None else 0,
+                        frame_image,
+                    )
                 )
-            )
+
         cap.release()
+        if target_fps:
+            frames = self._adjust_frames_list_acc_to_fps(
+                frames, original_fps, target_fps
+            )
+            
         return frames
 
-    def _get_corresponding_frame_indices(
-        self,
-        cap,
-        target_fps,
-        num_selected_frames,
-        is_random,
-    ):
-        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        original_fps = cap.get(cv2.CAP_PROP_FPS)
-        indices = range(frame_count)
-
-        if target_fps:
-            step = max(1, int(round(original_fps / target_fps)))
-            indices = indices[::step]
-            frame_count = len(indices)
-
-        if num_selected_frames:
-            num_selected_frames = min(num_selected_frames, frame_count)
-            if is_random:
-                indices = sorted(random.sample(range(frame_count), num_selected_frames))
-            else:
-                indices = indices[:num_selected_frames]
-
-        return list(indices)
+    def _adjust_frames_list_acc_to_fps(
+        self, original_frames: List[np.ndarray], original_fps: float, target_fps
+    ) -> List[np.ndarray]:
+        step = original_fps / target_fps
+        # fmt: off
+        return [original_frames[int(i * step)] for i in range(int(len(original_frames) / step))]    
 
     def display_image(self, image, title=None):
         plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
