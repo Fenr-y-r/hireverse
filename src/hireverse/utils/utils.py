@@ -6,7 +6,6 @@ import os
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
-
 def denormalize_landmarks_without_Z(
     landmark: NormalizedLandmark, img
 ) -> Tuple[int, int]:

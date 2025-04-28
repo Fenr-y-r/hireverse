@@ -5,7 +5,10 @@ import cv2
 import mediapipe as mp
 from typing import List, Tuple
 import numpy as np
-from mediapipe.framework.formats.landmark_pb2 import NormalizedLandmark, NormalizedLandmarkList
+from mediapipe.framework.formats.landmark_pb2 import (
+    NormalizedLandmark,
+    NormalizedLandmarkList,
+)
 import os
 import re
 import cv2
@@ -17,8 +20,6 @@ from pathlib import Path
 from hireverse.schemas.frame import Frame as fa
 from hireverse.schemas.selected_facial_landmarks import TwoLandmarksConnector
 from typing import Optional
-
-
 
 
 class FaceAnalyzer:
@@ -151,9 +152,7 @@ class FaceAnalyzer:
         return results
 
     # TODO: make sure this works
-    def get_largest_face_landmarks_obj(
-        self, image, detected_faces_landmarks
-    ) :
+    def get_largest_face_landmarks_obj(self, image, detected_faces_landmarks):
         """
         This function takes the MediaPipe results and returns the largest face landmarks
         based on bounding box area.
@@ -327,10 +326,8 @@ class FaceAnalyzer:
 
         return frames
 
-    def get_folder_path(self, participant_id ,video_folder_path:str):
-        return os.path.join(
-            video_folder_path, f"{participant_id}.avi"
-        )
+    def get_folder_path(self, participant_id, video_folder_path: str):
+        return os.path.join(video_folder_path, f"{participant_id}.avi")
 
     def get_video_frames_for_participant(
         self,
@@ -340,7 +337,19 @@ class FaceAnalyzer:
         is_random=True,
         target_fps=None,
     ) -> List[fa]:
-        
+        """
+        Retrieves video frames for a specific participant from the given video folder path.
+        Args:
+            participant_id (str): The unique identifier for the participant.
+            video_folder_path (str): The path to the folder containing the participant's video.
+            num_selected_frames (int, optional): The number of frames to select from the video.
+                If specified, the frames will be selected consecutively unless `is_random` is set to True.
+            is_random (bool, optional): Whether to select frames randomly. Defaults to True. Only used if num_selected_frames is specified.
+            target_fps (float, optional): The target frames per second for the video.
+        Returns:
+            List[Frame]: A list of frames extracted from the video.
+        """
+
         video_path = self.get_folder_path(participant_id, video_folder_path)
         return self._get_video_frames(
             video_path,
@@ -351,10 +360,16 @@ class FaceAnalyzer:
         )
 
     def get_video_frames(
-        self, video_path, num_selected_frames: int = None, is_consecutive=True, target_fps=None
+        self,
+        video_path,
+        participant_id,
+        num_selected_frames: int = None,
+        is_consecutive=True,
+        target_fps=None,
     ) -> List[fa]:
         return self._get_video_frames(
             video_path,
+            participant_id=participant_id,
             num_selected_frames=num_selected_frames,
             is_random=is_consecutive,
             target_fps=target_fps,
@@ -370,7 +385,7 @@ class FaceAnalyzer:
     ) -> List[fa]:
         frames: List[fa] = []
         cap = cv2.VideoCapture(video_path)
-        
+
         indices = self._get_corresponding_frame_indices(
             cap,
             target_fps=target_fps,
@@ -404,15 +419,15 @@ class FaceAnalyzer:
 
         if target_fps:
             step = max(1, int(round(original_fps / target_fps)))
-            indices = indices[::step]  
-            frame_count = len(indices) 
+            indices = indices[::step]
+            frame_count = len(indices)
 
         if num_selected_frames:
-            num_selected_frames = min(num_selected_frames, frame_count) 
+            num_selected_frames = min(num_selected_frames, frame_count)
             if is_random:
                 indices = sorted(random.sample(range(frame_count), num_selected_frames))
             else:
-                indices = indices[:num_selected_frames]   
+                indices = indices[:num_selected_frames]
 
         return list(indices)
 
