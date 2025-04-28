@@ -147,13 +147,19 @@ class Frame:
             ),
         )
 
-    def resize_according_to_width(self, new_width: int):
+    def resize(self, new_width: int, new_height: int = None):
         height, width = self.image.shape[:2]
-        aspect_ratio = height / width
-        new_height = int(new_width * aspect_ratio)
-        self.image = cv2.resize(self.image, (new_width, new_height))
 
-    def rotate_image_with_mediapipe_landmarks(self):
+        if new_height is None:
+            # Only width is given -> preserve aspect ratio
+            aspect_ratio = height / width
+            new_height = int(new_width * aspect_ratio)
+
+        self.image = cv2.resize(
+            self.image, (new_width, new_height), interpolation=cv2.INTER_CUBIC
+        )
+
+    def align_face_with_mediapipe_landmarks(self)-> None:
         if not self.facial_landmarks:
             return
 
@@ -161,42 +167,38 @@ class Frame:
         lm_chin = self.facial_landmarks[152]
         x1, y1 = denormalize_landmarks_without_Z(lm_forehead, self.image)
         x2, y2 = denormalize_landmarks_without_Z(lm_chin, self.image)
-        dx = x2 - x1 
-        dy = y2 - y1 
+        dx = x2 - x1
+        dy = y2 - y1
 
-        angle = -math.degrees(math.atan2(dx, dy)) 
+        angle = -math.degrees(math.atan2(dx, dy))
 
         img_h, img_w = self.image.shape[:2]
         center = (img_w // 2, img_h // 2)
         rotation_matrix = cv2.getRotationMatrix2D(center, angle, 1.0)
         self.image = cv2.warpAffine(
-            self.image, 
-            rotation_matrix, 
-            (img_w, img_h), 
-            flags=cv2.INTER_LINEAR
+            self.image, rotation_matrix, (img_w, img_h), flags=cv2.INTER_LINEAR
         )
         self._rotate_landmarks(rotation_matrix)
 
-    def _rotate_landmarks(self,rotation_matrix):
+    def _rotate_landmarks(self, rotation_matrix):
         for landmark in self.facial_landmarks:
-            x,y = denormalize_landmarks_without_Z(landmark, self.image)
+            x, y = denormalize_landmarks_without_Z(landmark, self.image)
             img_h, img_w = self.image.shape[:2]
             rotated_point = np.dot(rotation_matrix, np.array([x, y, 1]))
-            
+
             landmark.x = rotated_point[0] / img_w
             landmark.y = rotated_point[1] / img_h
 
     def crop_frame(self, x1, y1, x2, y2):
         """
         Crop the image to the given coordinates (x1, y1, x2, y2) using OpenCV.
-        
+
         Args:
             x1, y1: The top-left corner.
             x2, y2: The bottom-right corner.
-            
+
         Returns:
             Cropped image (NumPy array).
         """
         # Crop the image using slicing (rows: y1 to y2, columns: x1 to x2)
         self.image = self.image[y1:y2, x1:x2]
-        

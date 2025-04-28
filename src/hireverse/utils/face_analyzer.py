@@ -337,7 +337,7 @@ class FaceAnalyzer:
         participant_id: str,
         video_folder_path: str,
         num_selected_frames: int = None,
-        is_consecutive_frames=True,
+        is_random=True,
         target_fps=None,
     ) -> List[fa]:
         
@@ -346,7 +346,7 @@ class FaceAnalyzer:
             video_path,
             participant_id,
             num_selected_frames,
-            is_consecutive_frames=is_consecutive_frames,
+            is_random=is_random,
             target_fps=target_fps,
         )
 
@@ -356,7 +356,7 @@ class FaceAnalyzer:
         return self._get_video_frames(
             video_path,
             num_selected_frames=num_selected_frames,
-            is_consecutive_frames=is_consecutive,
+            is_random=is_consecutive,
             target_fps=target_fps,
         )
 
@@ -365,7 +365,7 @@ class FaceAnalyzer:
         video_path,
         participant_id,
         num_selected_frames: int,
-        is_consecutive_frames,
+        is_random,
         target_fps,
     ) -> List[fa]:
         frames: List[fa] = []
@@ -375,7 +375,7 @@ class FaceAnalyzer:
             cap,
             target_fps=target_fps,
             num_selected_frames=num_selected_frames,
-            is_consecutive_frames=is_consecutive_frames,
+            is_random=is_random,
         )
 
         for index in indices:
@@ -396,7 +396,7 @@ class FaceAnalyzer:
         cap,
         target_fps,
         num_selected_frames,
-        is_consecutive_frames,
+        is_random,
     ):
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         original_fps = cap.get(cv2.CAP_PROP_FPS)
@@ -404,18 +404,15 @@ class FaceAnalyzer:
 
         if target_fps:
             step = max(1, int(round(original_fps / target_fps)))
-            indices = indices[::step]  # Downsample frames based on target FPS
-            frame_count = len(indices)  # Update frame count after downsampling
+            indices = indices[::step]  
+            frame_count = len(indices) 
 
         if num_selected_frames:
-            num_selected_frames = min(num_selected_frames, frame_count) #  Ensure we don't request more frames than available
-            if is_consecutive_frames:
-                max_start = frame_count - num_selected_frames
-                starting_frame = random.randint(0, max(max_start, 0))
-                indices = indices[starting_frame : starting_frame + num_selected_frames]    # Takes consecutive frames AFTER FPS downsampling
-
-            else:
+            num_selected_frames = min(num_selected_frames, frame_count) 
+            if is_random:
                 indices = sorted(random.sample(range(frame_count), num_selected_frames))
+            else:
+                indices = indices[:num_selected_frames]   
 
         return list(indices)
 
