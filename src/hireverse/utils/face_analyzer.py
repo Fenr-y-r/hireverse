@@ -24,7 +24,7 @@ from typing import Optional
 
 class FaceAnalyzer:
     face_mesh = mp.solutions.face_mesh.FaceMesh(
-        static_image_mode=True, min_detection_confidence=0.5
+        static_image_mode=False, min_detection_confidence=0.5, max_num_faces=1
     )
     VIDEOS_FOLDER_PATH = "./MIT/Videos/"
 
@@ -149,30 +149,9 @@ class FaceAnalyzer:
             cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         ).multi_face_landmarks
         image.flags.writeable = True
-        return results
-
-    # TODO: make sure this works
-    def get_largest_face_landmarks_obj(self, image, detected_faces_landmarks):
-        """
-        This function takes the MediaPipe results and returns the largest face landmarks
-        based on bounding box area.
-        """
-        if detected_faces_landmarks:
-            max_area = 0
-            largest_face_landmarks = None
-
-            for face_landmarks_obj in detected_faces_landmarks:
-                _, _, w, h = self.get_face_coordinates(
-                    face_landmarks_obj.landmark, image
-                )
-                area = w * h
-
-                if area > max_area:
-                    max_area = area
-                    largest_face_landmarks = face_landmarks_obj
-            return largest_face_landmarks
-
-        return None
+        if not results:
+            return None
+        return results[0]
 
     # fmt: off
     def _get_brow_interest_points(self, face_interest_points):
@@ -401,6 +380,7 @@ class FaceAnalyzer:
                 )
 
         cap.release()
+
         if target_fps:
             frames = self._adjust_frames_list_acc_to_fps(
                 frames, original_fps, target_fps
