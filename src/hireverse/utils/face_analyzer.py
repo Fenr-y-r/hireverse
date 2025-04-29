@@ -143,15 +143,39 @@ class FaceAnalyzer:
             round((max_y - min_y) * img_w),
         )
 
-    def process_image_results(self, image) -> Optional[List[NormalizedLandmarkList]]:
+
+    def process_image_results(self, image) -> Optional[NormalizedLandmarkList]:
         image.flags.writeable = False
         results = FaceAnalyzer.face_mesh.process(
             cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         ).multi_face_landmarks
         image.flags.writeable = True
-        if not results:
-            return None
-        return results[0]
+        return results[0] if results else None
+
+    # TODO: make sure this works
+    def get_largest_face_landmarks_obj(
+        self, image, detected_faces_landmarks
+    ) :
+        """
+        This function takes the MediaPipe results and returns the largest face landmarks
+        based on bounding box area.
+        """
+        if detected_faces_landmarks:
+            max_area = 0
+            largest_face_landmarks = None
+
+            for face_landmarks_obj in detected_faces_landmarks:
+                _, _, w, h = self.get_face_coordinates(
+                    face_landmarks_obj.landmark, image
+                )
+                area = w * h
+
+                if area > max_area:
+                    max_area = area
+                    largest_face_landmarks = face_landmarks_obj
+            return largest_face_landmarks
+
+        return None
 
     # fmt: off
     def _get_brow_interest_points(self, face_interest_points):
