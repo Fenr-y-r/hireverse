@@ -10,4 +10,4 @@ archive (3)/
 papers/
 interview_features.csv
 *.egg-info/
-npz_frames/
+videos_frames/

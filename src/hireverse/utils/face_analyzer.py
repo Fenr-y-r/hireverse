@@ -418,16 +418,20 @@ class FaceAnalyzer:
         cap.release()
         return lol
 
-    def yield_video_frames(self, video_path: str, participant_id: int, target_fps: Optional[int]):
+    def yield_video_frames(self, video_path: str, participant_id: int, target_fps: Optional[int], num_selected_frames: float = None):
         cap = cv2.VideoCapture(video_path)
         original_fps = cap.get(cv2.CAP_PROP_FPS)
-        
+        if not num_selected_frames:
+            num_selected_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
         frame_index = 0
         while True:
             ret, frame_image = cap.read()
             if not ret:
                 break
             yield fa(frame_index, participant_id or 0, frame_image)
+            if frame_index == num_selected_frames:
+                break
             frame_index += 1
             
         cap.release()
