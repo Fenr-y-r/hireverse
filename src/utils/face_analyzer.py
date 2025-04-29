@@ -421,3 +421,4 @@ class FaceAnalyzer:
         plt.title(title)
         plt.axis("off")
         plt.show()
+

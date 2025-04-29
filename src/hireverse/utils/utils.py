@@ -4,8 +4,19 @@ from typing import List, Tuple
 from mediapipe.framework.formats.landmark_pb2 import NormalizedLandmark
 import os
 
+import pandas as pd
+
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+
+def get_labels_dict(participant_id: str):
+    df = pd.read_csv(
+        os.path.join(BASE_DIR, "data", "external", "turker_scores_full_interview.csv"),
+    )
+    df = df.loc[
+        (df["Participant"] == participant_id.lower()) & (df["Worker"] == "AGGR")
+    ]
+    return df.iloc[0].to_dict()
 
 def denormalize_landmarks_without_Z(
     landmark: NormalizedLandmark, img

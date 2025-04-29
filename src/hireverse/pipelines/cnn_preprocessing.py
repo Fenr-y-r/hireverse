@@ -18,20 +18,26 @@ import psutil
 from tqdm import tqdm
 from pathlib import Path
 import numpy as np
+import copy
+
+error_count = 0
 
 
 def get_processed_frames_images(vid_file_path: str, participant_id):
     face_analyzer = FaceAnalyzer()
-    no_frames   = face_analyzer.get_video_frame_count(vid_file_path)
+    no_frames = face_analyzer.get_video_frame_count(vid_file_path)
     # try:
-    for frame in tqdm(face_analyzer.yield_video_frames(
-        vid_file_path, participant_id, target_fps=20, num_selected_frames=40
-    ), total=no_frames):
+    for frame in tqdm(
+        face_analyzer.yield_video_frames(
+            vid_file_path, participant_id, target_fps=20, num_selected_frames=40
+        ),
+        total=no_frames,
+    ):
         try:
             landmarks_obj = face_analyzer.process_image_results(frame.image)
             if not landmarks_obj:
                 continue  # Skip frames without detectable faces
-
+            original_frame = copy.deepcopy(frame)
             frame.facial_landmarks = landmarks_obj.landmark
 
             if frame.image.shape[1] != 640:
@@ -39,11 +45,13 @@ def get_processed_frames_images(vid_file_path: str, participant_id):
 
             frame.align_face_with_mediapipe_landmarks()
 
-            x, y, w, h = face_analyzer.get_face_coordinates(
-                frame.facial_landmarks, frame.image
-            )
-            frame.crop_frame(x, y, x + w, y + h)
-
+            frame.face = face_analyzer.get_face_coordinates(frame.facial_landmarks, frame.image)
+            x, y, w, h = frame.face
+            cropped_face_image = frame.get_cropped_image(x, y, x + w, y + h)
+            if cropped_face_image is None:
+                continue
+            frame.image = cropped_face_image
+            
             frame.image = cv2.cvtColor(frame.image, cv2.COLOR_BGR2GRAY)
 
             # normalized = np.clip(frame.image.astype("float32") / 255.0, 0.0, 1.0)
@@ -51,54 +59,50 @@ def get_processed_frames_images(vid_file_path: str, participant_id):
             frame.resize(new_width=640, new_height=640)
 
             yield frame.image
+        except Exception as e:
+            global error_count
+            error_count += 1
+            show_image(original_frame)
+            print(
+                f"Error #{error_count} converting frame of {participant_id} to grayscale: {e}"
+            )
 
         finally:
             if "landmarks_obj" in locals():
                 del landmarks_obj
             del frame
-            
 
     # except Exception as e:
     #     print(f"Error processing {vid_file_path}: {str(e)}")
     #     raise
     # finally:
     #     del face_analyzer
-    # for frame in frames[:7]:
-    #     frame.reset_drawable_image()
-    #     # frame.draw_face_border()
-    #     # frame.draw_facial_landmarks()
-    #     # if frame.facial_landmarks:
-    #     #     frame.draw_circle_at_facial_landmark(frame.facial_landmarks[10], frame.facial_landmarks[152])
-    #     frame.display()
+
+
+def show_image(frame):
+    frame.reset_drawable_image()
+    # frame.draw_face_border()
+    # frame.draw_facial_landmarks()
+    # if frame.facial_landmarks:
+    #     frame.draw_circle_at_facial_landmark(frame.facial_landmarks[10], frame.facial_landmarks[152])
+    frame.display()
 
 
 def process_single_video(vid_path, output_dir, participant_id):
-    labels = get_labels_dict_from_participant_id(participant_id)
+    labels = get_labels_dict(participant_id)
     if os.path.exists(output_dir):
-        shutil.rmtree(output_dir)  
+        shutil.rmtree(output_dir)
     os.makedirs(output_dir)
-    for idx, img in enumerate(
-        get_processed_frames_images(vid_path, participant_id)
-    ):
-        output_path = os.path.join(output_dir,f"frame{idx}.jpg")
-        cv2.imwrite(  
-            output_path,   
-            img,   
-            [int(cv2.IMWRITE_JPEG_QUALITY), 100]  # Adjust quality (1-100)  
-        )  
+    for idx, img in enumerate(get_processed_frames_images(vid_path, participant_id)):
+        output_path = os.path.join(output_dir, f"frame{idx}.jpg")
+        cv2.imwrite(
+            output_path,
+            img,
+            [int(cv2.IMWRITE_JPEG_QUALITY), 100],  # Adjust quality (1-100)
+        )
         del img  # optional, helps if image is large
 
     print(f"Saved {participant_id}")
-
-
-def get_labels_dict_from_participant_id(participant_id: str):
-    df = pd.read_csv(
-        os.path.join(BASE_DIR, "data", "external", "turker_scores_full_interview.csv"),
-    )
-    lol = df.loc[
-        (df["Participant"] == participant_id.lower()) & (df["Worker"] == "AGGR")
-    ]
-    return lol.iloc[0].to_dict()
 
 
 if __name__ == "__main__":

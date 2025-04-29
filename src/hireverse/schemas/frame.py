@@ -189,16 +189,31 @@ class Frame:
             landmark.x = rotated_point[0] / img_w
             landmark.y = rotated_point[1] / img_h
 
-    def crop_frame(self, x1, y1, x2, y2):
+    def get_cropped_image(self, x1, y1, x2, y2):
         """
-        Crop the image to the given coordinates (x1, y1, x2, y2) using OpenCV.
+        Crop the image to the given coordinates (x1, y1, x2, y2) using OpenCV. 
 
         Args:
             x1, y1: The top-left corner.
             x2, y2: The bottom-right corner.
 
         Returns:
-            Cropped image (NumPy array).
+            Cropped image (NumPy array) or None if the coordinates are out of bounds.
         """
-        # Crop the image using slicing (rows: y1 to y2, columns: x1 to x2)
-        self.image = self.image[y1:y2, x1:x2]
+        img_height, img_width = self.image.shape[:2]
+        if not (0 <= x1 < x2 <= img_width and 0 <= y1 < y2 <= img_height):
+            return None
+        return self.image[y1:y2, x1:x2]
+
+    def is_blurry(self, threshold=50):  
+        """
+        takes greyscale image and threshold as input
+        """
+        img = self.image
+        if img.dtype != np.uint8:
+            img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+        
+        variance = cv2.Laplacian(img, cv2.CV_64F).var()
+        print(f"Laplacian variance: {variance:.2f}")
+        
+        return variance < threshold
