@@ -1,4 +1,5 @@
 import gc
+from multiprocessing import Pool, cpu_count
 import random
 import shutil
 import time
@@ -20,18 +21,13 @@ from pathlib import Path
 import numpy as np
 import copy
 
-error_count = 0
-
 
 def get_processed_frames_images(vid_file_path: str, participant_id):
     face_analyzer = FaceAnalyzer()
     no_frames = face_analyzer.get_video_frame_count(vid_file_path)
     # try:
-    for frame in tqdm(
-        face_analyzer.yield_video_frames(
-            vid_file_path, participant_id, num_selected_frames=40
-        ),
-        total=no_frames,
+    for frame in face_analyzer.yield_video_frames(
+        vid_file_path, participant_id
     ):
         try:
             landmarks_obj = face_analyzer.process_image_results(frame.image)
@@ -45,13 +41,15 @@ def get_processed_frames_images(vid_file_path: str, participant_id):
 
             frame.align_face_with_mediapipe_landmarks()
 
-            frame.face = face_analyzer.get_face_coordinates(frame.facial_landmarks, frame.image)
+            frame.face = face_analyzer.get_face_coordinates(
+                frame.facial_landmarks, frame.image
+            )
             x, y, w, h = frame.face
             cropped_face_image = frame.get_cropped_image(x, y, x + w, y + h)
             if cropped_face_image is None:
                 continue
             frame.image = cropped_face_image
-            
+
             frame.image = cv2.cvtColor(frame.image, cv2.COLOR_BGR2GRAY)
 
             # normalized = np.clip(frame.image.astype("float32") / 255.0, 0.0, 1.0)
@@ -59,13 +57,6 @@ def get_processed_frames_images(vid_file_path: str, participant_id):
             frame.resize(new_width=640, new_height=640)
 
             yield frame.image
-        except Exception as e:
-            global error_count
-            error_count += 1
-            show_image(original_frame)
-            print(
-                f"Error #{error_count} converting frame of {participant_id} to grayscale: {e}"
-            )
 
         finally:
             if "landmarks_obj" in locals():
@@ -105,12 +96,34 @@ def process_single_video(vid_path, output_dir, participant_id):
     print(f"Saved {participant_id}")
 
 
+def process_single_video_wrapper(args):
+    """Wrapper function for multiprocessing"""
+    vid_path, output_dir, participant_id = args
+    try:
+        process_single_video(vid_path, output_dir, participant_id)
+        return True
+    except Exception as e:
+        print(f"Error processing {participant_id}: {str(e)}")
+        return False
+
+
 if __name__ == "__main__":
     video_dir = os.path.join(BASE_DIR, "data", "raw", "videos")
     output_dir = os.path.join(BASE_DIR, "data", "processed", "videos_frames")
-
     participant_ids = get_participant_ids()
+
+    inputs = []
     for participant_id in participant_ids:
         input_video_path = os.path.join(video_dir, f"{participant_id}.avi")
         participant_dir = os.path.join(output_dir, participant_id)
-        process_single_video(input_video_path, participant_dir, participant_id)
+        inputs.append((input_video_path, participant_dir, participant_id))
+
+    max_workers = cpu_count() - 1
+    with Pool(processes=max_workers) as pool:
+        results = list(
+            tqdm(
+                pool.imap(process_single_video_wrapper, inputs),
+                total=len(inputs),
+                desc="Processing videos",
+            )
+        )
