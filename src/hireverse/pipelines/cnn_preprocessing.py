@@ -29,7 +29,7 @@ def get_processed_frames_images(vid_file_path: str, participant_id):
     # try:
     for frame in tqdm(
         face_analyzer.yield_video_frames(
-            vid_file_path, participant_id, target_fps=20, num_selected_frames=40
+            vid_file_path, participant_id, num_selected_frames=40
         ),
         total=no_frames,
     ):
