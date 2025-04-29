@@ -411,6 +411,27 @@ class FaceAnalyzer:
             )
             
         return frames
+    
+    def get_video_frame_count(self, video_path: str) -> int:
+        cap = cv2.VideoCapture(video_path)
+        lol =int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        cap.release()
+        return lol
+
+    def yield_video_frames(self, video_path: str, participant_id: int, target_fps: Optional[int]):
+        cap = cv2.VideoCapture(video_path)
+        original_fps = cap.get(cv2.CAP_PROP_FPS)
+        
+        frame_index = 0
+        while True:
+            ret, frame_image = cap.read()
+            if not ret:
+                break
+            yield fa(frame_index, participant_id or 0, frame_image)
+            frame_index += 1
+            
+        cap.release()
+       
 
     def _adjust_frames_list_acc_to_fps(
         self, original_frames: List[np.ndarray], original_fps: float, target_fps
