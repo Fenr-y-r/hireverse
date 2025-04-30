@@ -28,7 +28,6 @@ class FeatureStorage:
         df = pd.DataFrame([data])
 
         if not os.path.exists(self.csv_path):
-            # Create new file if it doesn’t exist
             df.to_csv(self.csv_path, index=False)
         else:
             existing_df = pd.read_csv(self.csv_path)
@@ -105,11 +104,11 @@ class FeatureStorage:
                 for agg_name, agg_func in agg_funcs.items()
             },
             ** {
-                "max_head_displacement": np.max(displacement_features["head_displacement"]),
-                "mean_head_vertical_displacement": np.mean(
+                "head_displacement_max": np.max(displacement_features["head_displacement"]),
+                "head_vertical_displacement_mean": np.mean(
                     displacement_features["head_vertical_displacement"]
                 ),
-                "mean_head_horizontal_displacement": np.mean(
+                "head_horizontal_displacement_mean": np.mean(
                     displacement_features["head_horizontal_displacement"]
                 ),
             }

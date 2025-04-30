@@ -112,9 +112,9 @@ class FacialFeatures:
     yaw_median: float
     roll_median: float
 
-    head_displacement: float
-    head_vertical_displacement: float
-    head_horizontal_displacement: float
+    head_displacement_max: float
+    head_vertical_displacement_mean: float
+    head_horizontal_displacement_mean: float
 
     def __str__(self):
         return (
