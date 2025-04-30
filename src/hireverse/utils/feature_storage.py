@@ -51,9 +51,10 @@ class FeatureStorage:
 
     def aggregate_facial_features(self, frames: list[Frame]):
         feature_names = self._get_two_landmark_connectors_features_names(frames)
-
+        feature_lists = {}
         # Initialize feature lists
-        feature_lists = {name: [] for name in feature_names}
+        if feature_names:
+            feature_lists = {name: [] for name in feature_names}
         extra_features = {
             "smile": [],
             "pitch": [],
@@ -104,11 +105,11 @@ class FeatureStorage:
                 for agg_name, agg_func in agg_funcs.items()
             },
             ** {
-                "head_displacement": np.max(displacement_features["head_displacement"]),
-                "head_vertical_displacement": np.mean(
+                "max_head_displacement": np.max(displacement_features["head_displacement"]),
+                "mean_head_vertical_displacement": np.mean(
                     displacement_features["head_vertical_displacement"]
                 ),
-                "head_horizontal_displacement": np.mean(
+                "mean_head_horizontal_displacement": np.mean(
                     displacement_features["head_horizontal_displacement"]
                 ),
             }

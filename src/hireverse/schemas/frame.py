@@ -30,7 +30,7 @@ class Frame:
         self.image = image
         self.smile_area = None
         self.face: Tuple[int, int, int, int] = None
-        self.smile: Tuple[int, int, int, int] = None
+        self.smile: float = None
         self.facial_landmarks: NormalizedLandmarkList = None
         self.copied_image_for_drawing = None
         self.two_landmarks_connectors: List[TwoLandmarksConnector] = None
