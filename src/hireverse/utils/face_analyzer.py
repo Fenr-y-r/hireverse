@@ -143,6 +143,41 @@ class FaceAnalyzer:
             round((max_y - min_y) * img_w),
         )
 
+    def get_bouding_box_center(self, bbox):
+        """
+        Extract the center of a single bounding box from its coordinates.
+
+        Args:
+            bbox: A tuple (x_min, y_min, x_max, y_max) representing the bounding box.
+
+        Returns:
+            Tuple: (center_x, center_y) representing the center of the bounding box.
+        """
+        x_min, y_min, x_max, y_max = bbox
+        center_x = (x_min + x_max) / 2
+        center_y = (y_min + y_max) / 2
+        return (center_x, center_y)
+
+    def get_displacement_between_two_bounding_boxes(self, bbox1, bbox2):
+        """
+        Returns the Euclidean distance (displacement) between two bounding box centers.
+        """
+        delta = np.array(bbox2) - np.array(bbox1)
+        return np.linalg.norm(delta)
+
+    def get_horizontal_distance_between_two_bounding_boxes(self, bbox1, bbox2):
+        """
+        Returns the absolute left-right movement between two bounding boxes.
+        """
+        delta = np.array(bbox2) - np.array(bbox1)
+        return abs(delta[0])
+
+    def get_vertical_displacement_between_two_bounding_boxes(self, bbox1, bbox2):
+        """
+        Returns the absolute up-down movement between two bounding boxes.
+        """
+        delta = np.array(bbox2) - np.array(bbox1)
+        return abs(delta[1])
 
     def process_image_results(self, image) -> Optional[NormalizedLandmarkList]:
         image.flags.writeable = False
@@ -153,9 +188,7 @@ class FaceAnalyzer:
         return results[0] if results else None
 
     # TODO: make sure this works
-    def get_largest_face_landmarks_obj(
-        self, image, detected_faces_landmarks
-    ) :
+    def get_largest_face_landmarks_obj(self, image, detected_faces_landmarks):
         """
         This function takes the MediaPipe results and returns the largest face landmarks
         based on bounding box area.
@@ -331,8 +364,7 @@ class FaceAnalyzer:
 
     def get_folder_path(self, participant_id, video_folder_path: str):
         return os.path.join(video_folder_path, f"{participant_id}.avi")
-    
-    
+
     def get_video_frames_for_participant(
         self,
         participant_id: str,
@@ -378,8 +410,8 @@ class FaceAnalyzer:
             is_random=is_consecutive,
             target_fps=target_fps,
         )
-    
-    #TODO: num_selected_frames and is_random are not implrmeneted yet
+
+    # TODO: num_selected_frames and is_random are not implrmeneted yet
     def _get_video_frames(
         self,
         video_path: str,
@@ -409,16 +441,18 @@ class FaceAnalyzer:
             frames = self._adjust_frames_list_acc_to_fps(
                 frames, original_fps, target_fps
             )
-            
-        return frames
-    
+
+        return frames[:num_selected_frames] if num_selected_frames else frames
+
     def get_video_frame_count(self, video_path: str) -> int:
         cap = cv2.VideoCapture(video_path)
-        lol =int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        lol = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         cap.release()
         return lol
 
-    def yield_video_frames(self, video_path: str, participant_id: int, num_selected_frames: float = None):
+    def yield_video_frames(
+        self, video_path: str, participant_id: int, num_selected_frames: float = None
+    ):
         cap = cv2.VideoCapture(video_path)
         if not num_selected_frames:
             num_selected_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -432,9 +466,8 @@ class FaceAnalyzer:
             if frame_index == num_selected_frames:
                 break
             frame_index += 1
-            
+
         cap.release()
-       
 
     def _adjust_frames_list_acc_to_fps(
         self, original_frames: List[np.ndarray], original_fps: float, target_fps

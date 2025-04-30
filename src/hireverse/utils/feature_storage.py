@@ -8,15 +8,15 @@ from hireverse.schemas.model_features import *
 from hireverse.schemas.frame import Frame
 
 
-
 # Add project root to sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
+
 class FeatureStorage:
 
-    def __init__(self, csv_path: str ):
+    def __init__(self, csv_path: str):
         if csv_path:
             self.csv_path = csv_path
 
@@ -41,7 +41,7 @@ class FeatureStorage:
                 self.csv_path, mode="a", header=False, index=False
             )  # Append new row
 
-    def _get_feature_names(self, frames: list[Frame]):
+    def _get_two_landmark_connectors_features_names(self, frames: list[Frame]):
         for frame in frames:
             if frame.two_landmarks_connectors is not None:
                 feature_names = [
@@ -50,11 +50,22 @@ class FeatureStorage:
                 return feature_names
 
     def aggregate_facial_features(self, frames: list[Frame]):
-        feature_names = self._get_feature_names(frames)
+        feature_names = self._get_two_landmark_connectors_features_names(frames)
 
         # Initialize feature lists
         feature_lists = {name: [] for name in feature_names}
-        extra_features = {"smile": [], "pitch": [], "yaw": [], "roll": []}
+        extra_features = {
+            "smile": [],
+            "pitch": [],
+            "yaw": [],
+            "roll": [],
+        }
+
+        displacement_features = {
+            "head_displacement": [],
+            "head_vertical_displacement": [],
+            "head_horizontal_displacement": [],
+        }
 
         # Collect data from frames
         for frame in frames:
@@ -68,6 +79,14 @@ class FeatureStorage:
                 for connector in frame.two_landmarks_connectors:
                     if connector.name in feature_lists:
                         feature_lists[connector.name].append(connector.length)
+            if frame.head_displacement is not None:
+                displacement_features["head_displacement"].append(frame.head_displacement)
+                displacement_features["head_vertical_displacement"].append(
+                    frame.head_vertical_displacement
+                )
+                displacement_features["head_horizontal_displacement"].append(
+                    frame.head_horizontal_displacement
+                )
 
         # Aggregation functions
         agg_funcs = {
@@ -78,11 +97,21 @@ class FeatureStorage:
             "median": np.median,
         }
 
-        # Compute statistics dynamically
         aggregated_features = {
-            f"{key}_{agg_name}": agg_func(values)
-            for key, values in {**feature_lists, **extra_features}.items()
-            for agg_name, agg_func in agg_funcs.items()
+            **{
+                f"{key}_{agg_name}": agg_func(values)
+                for key, values in {**feature_lists, **extra_features}.items()
+                for agg_name, agg_func in agg_funcs.items()
+            },
+            ** {
+                "head_displacement": np.max(displacement_features["head_displacement"]),
+                "head_vertical_displacement": np.mean(
+                    displacement_features["head_vertical_displacement"]
+                ),
+                "head_horizontal_displacement": np.mean(
+                    displacement_features["head_horizontal_displacement"]
+                ),
+            }
         }
 
         return FacialFeatures(**aggregated_features)

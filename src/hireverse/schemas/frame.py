@@ -39,6 +39,9 @@ class Frame:
         self.facial_landmarks_obj = None
         self.face_angles: Tuple[int, int, int] = None
         self.is_categorized_by_participant = is_categorized_by_participant
+        self.head_displacement = None
+        self.head_vertical_displacement = None
+        self.head_horizontal_displacement = None
 
     def _create_drawable_image_copy_if_not_exist(self):
         if self.copied_image_for_drawing is None:
@@ -217,3 +220,4 @@ class Frame:
         print(f"Laplacian variance: {variance:.2f}")
         
         return variance < threshold
+

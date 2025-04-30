@@ -112,6 +112,10 @@ class FacialFeatures:
     yaw_median: float
     roll_median: float
 
+    head_displacement: float
+    head_vertical_displacement: float
+    head_horizontal_displacement: float
+
     def __str__(self):
         return (
             f"FacialFeatures("
@@ -130,6 +134,8 @@ class FacialFeatures:
             f"average_outer_brow_height_median={self.average_outer_brow_height_median}, average_inner_brow_height_median={self.average_inner_brow_height_median}, "
             f"eye_open_median={self.eye_open_median}, outer_lip_height_median={self.outer_lip_height_median}, inner_lip_height_median={self.inner_lip_height_median}, "
             f"lip_corner_distance_median={self.lip_corner_distance_median}, smile_median={self.smile_median}, pitch_median={self.pitch_median}, yaw_median={self.yaw_median}, roll_median={self.roll_median})"
+            f"head_displacement={self.head_displacement}, head_vertical_displacement={self.head_vertical_displacement}, head_horizontal_displacement={self.head_horizontal_displacement})"
+            
         )
 
 

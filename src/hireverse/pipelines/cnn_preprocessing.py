@@ -89,7 +89,7 @@ def process_single_video(vid_path, output_dir, participant_id):
         cv2.imwrite(
             output_path,
             img,
-            [int(cv2.IMWRITE_JPEG_QUALITY), 100],  # Adjust quality (1-100)
+            [int(cv2.IMWRITE_JPEG_QUALITY), 80],  # Adjust quality (1-100)
         )
         del img  # optional, helps if image is large
 
