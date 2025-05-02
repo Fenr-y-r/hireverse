@@ -24,7 +24,6 @@ import copy
 
 def get_processed_frames_images(vid_file_path: str, participant_id):
     face_analyzer = FaceAnalyzer()
-    no_frames = face_analyzer.get_video_frame_count(vid_file_path)
     # try:
     for frame in face_analyzer.yield_video_frames(
         vid_file_path, participant_id
@@ -106,16 +105,37 @@ def process_single_video_wrapper(args):
         print(f"Error processing {participant_id}: {str(e)}")
         return False
 
+def delete_first_10_frames(participant_id):
+    participant_dir = get_participant_dir(participant_id)
+    for i in range(10):
+        file_path = os.path.join(participant_dir, f"frame{i}.jpg")
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+def adjust_frame_rate(participant_id, original_fps, target_fps):
+    keep_ratio = target_fps / original_fps
+    participant_dir = get_participant_dir(participant_id)
+    frame_files = sorted(
+        [f for f in os.listdir(participant_dir) if f.lower().endswith(('.jpg', '.jpeg'))],
+        key=lambda x: int(Path(x).stem.replace("frame", ""))
+    )
+
+    total_frames = len(frame_files)
+    keep_indices = set(np.floor(i / keep_ratio) for i in range(int(total_frames * keep_ratio)))
+
+    for idx, filename in enumerate(frame_files):
+        if idx not in keep_indices:
+            os.remove(os.path.join(participant_dir, filename))
 
 if __name__ == "__main__":
     video_dir = os.path.join(BASE_DIR, "data", "raw", "videos")
-    output_dir = os.path.join(BASE_DIR, "data", "processed", "videos_frames")
+    
     participant_ids = get_participant_ids()
 
     inputs = []
     for participant_id in participant_ids:
         input_video_path = os.path.join(video_dir, f"{participant_id}.avi")
-        participant_dir = os.path.join(output_dir, participant_id)
+        participant_dir = get_participant_dir(participant_id)
         inputs.append((input_video_path, participant_dir, participant_id))
 
     max_workers = cpu_count() - 1
@@ -127,3 +147,10 @@ if __name__ == "__main__":
                 desc="Processing videos",
             )
         )
+
+    print(participant_ids)
+    for participant_id in participant_ids:
+        delete_first_10_frames(participant_id)
+        adjust_frame_rate(participant_id, 30, 20)
+
+    

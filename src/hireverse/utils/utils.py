@@ -78,3 +78,7 @@ def get_participant_ids():
             participant_id = f"{prefix}{participant_number}"
             participant_ids.append(participant_id)
     return participant_ids
+
+def get_participant_dir(participant_id):
+    output_dir = os.path.join(BASE_DIR, "data", "processed", "videos_frames")
+    return os.path.join(output_dir, participant_id)
