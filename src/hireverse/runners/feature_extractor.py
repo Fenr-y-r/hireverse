@@ -1,4 +1,5 @@
 import concurrent
+from hireverse.utils.dataset_handler import DatasetHandler
 from hireverse.utils.utils import BASE_DIR, get_participant_ids
 import papermill as pm  
 import re
@@ -20,7 +21,7 @@ def execute_notebook(participant_id):
     )
 
 
-participant_ids = get_participant_ids()
+participant_ids = DatasetHandler.get_participant_ids()
 participant_ids.remove("P13")
 with concurrent.futures.ThreadPoolExecutor() as executor:
     results = executor.map(execute_notebook, participant_ids)
